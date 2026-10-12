@@ -167,6 +167,21 @@ header b{font-size:17px}
 .lh{margin-bottom:6px}
 .tabs button{height:50px}
 body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+
+/* v4 */
+.hero .hh{min-height:22px;margin-top:2px}
+.hero .sec{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.tile.t1{flex:1.15}
+.tile.ct{flex:1;background:color-mix(in srgb,var(--cc) 18%,var(--card))}
+.tile.ct b{font-size:22px}
+.bt button.undo{flex:.7;background:transparent;box-shadow:inset 0 0 0 1px var(--bd);color:var(--sub)}
+#lstbox{padding:10px 8px}
+#lstbox .hd{padding:0 6px}
+.rw{gap:8px;padding:7px 10px 7px 12px}
+.chip{min-width:46px;font-size:12px}
+.rw .pl{padding:1px 7px 1px 6px}
+.rw .rt{min-width:22px;text-align:right}
+.rw .rt b{font-size:17px}
 </style>
 </head>
 <body>
@@ -433,11 +448,12 @@ function r0(){
  var f=null;if(ST.sel)f=act.filter(function(i){return i.key===ST.sel})[0];if(!f)f=act[0];
  var b='';
  if(f){
-  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh">'+pill(f.cid)+'<span class="sm">'+esc(f.sec.name)+'・'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span><button class="s" onclick="T.undo()">戻す</button></div><div class="nrow"><div class="nm">'+esc(f.p.name)+'</div><div class="vs"><div>'+(f.opp?'対 '+esc(f.opp):'相手は前の試合しだい')+'</div><div>'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile '+cls(f.rem)+'"><i>いま</i><b>'+remText(f.rem)+'</b></div>'+etaHtml(f)+'</div><div class="w">'+(f.path.length?'勝てば次の試合　<b>'+f.path.join(', ')+'</b>':(f.st.third?'3位決定戦です':'この試合が決勝です'))+'</div><div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button></div></div>';
+  var ee=etaOf(f);
+  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh"><span class="sec">'+esc(f.sec.name)+'<span class="sm">　'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span></span></div><div class="nrow"><div class="nm">'+esc(f.p.name)+'</div><div class="vs"><div>'+(f.opp?'対 '+esc(f.opp):'相手は前の試合しだい')+'</div><div>'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile t1 '+cls(f.rem)+'"><i>'+(ee?'開始の目安 '+ee.t:'いま')+'</i><b>'+remText(f.rem)+'</b></div><div class="tile ct"><i>試合場</i><b>'+esc(clabel(f.cid))+'</b></div></div><div class="w">'+(f.path.length?'勝てば次の試合　<b>'+f.path.join(', ')+'</b>':(f.st.third?'3位決定戦です':'この試合が決勝です'))+'</div><div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button><button class="undo" onclick="T.undo()">戻す</button></div></div>';
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='';act.forEach(function(it){
-  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'">'+(it.rem>=999?'別':it.rem<=0?'次':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?'第'+it.rk:'別')+'</b></span></div>'});
+  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'">'+(it.rem>=999?'別':it.rem<=0?'次':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
  $('lst').innerHTML=l||'<div class="sm">出番の選手はいません。</div>';
  var g='';COURTS.forEach(function(c){
   var d='',dn=ST.done[c.id]||0;
