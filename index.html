@@ -273,8 +273,6 @@ header #hdate .d{font-size:11px;color:var(--sub)}
 .dtw .dtv.ph{color:var(--sub)}
 .dtw:focus-within{box-shadow:0 0 0 2px var(--acc)}
 .fl2 .dti{position:absolute;left:0;top:0;width:100%;height:100%;margin:0;padding:0;opacity:0;border:0;font-size:16px}
-/* 大会タブ：試合場の数・自動割り当て（折りたたみ）の見出し */
-#asec>summary .sm{margin-left:auto}
 .sheetnote{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 0;font-size:16px}
 </style>
 </head>
@@ -345,13 +343,12 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="row2"><button onclick="T.rdefSave()">この設定を初期値にする</button></div>
     <div class="sm" style="margin-top:8px">大会名ごとに、設定した内容を自動で記録します（「第◯回」や年が違っても、同じ大会として扱います）。初めての大会は、初期値から始まります。</div>
   </div>
-  <div id="asl"></div>
-  <details class="box" id="asec">
-    <summary class="hd"><span>試合場の数・自動割り当て</span><span class="sm" id="assum"></span></summary>
+  <div class="box" id="asec">
+    <div class="hd"><span>試合場の数</span></div>
     <div class="tg"><span class="sm">当日わかったら入れてください</span><span class="cs"><button onclick="T.asN(-1)" aria-label="減らす">−</button><b id="asn" style="min-width:56px;text-align:center"></b><button onclick="T.asN(1)" aria-label="増やす">＋</button></span></div>
-    <div class="row2"><button onclick="T.asAuto()">自動で振り分ける</button><button onclick="T.asClear()">割り当てを消す</button></div>
-    <div class="sm" style="margin-top:8px">自動は、試合数がなるべく均等になるよう、部の順に振り分けます。あとから部ごとに試合場と順番を変えられます。同じ試合場の中では、上の部から先に行われる想定です。</div>
-  </details>
+    <div class="sm" style="margin-top:8px">各部の試合場と順番は、下のリストで決めます。同じ試合場の中では、上の部から先に行われる想定です。</div>
+  </div>
+  <div id="asl"></div>
   <details class="box"><summary class="hd"><span>検算・要確認（JSONを作った側の確認）</span></summary>
     <div class="hd" style="margin-top:8px"><span>検算</span></div><div id="chk"></div>
     <div class="hd" style="margin-top:12px"><span>要確認（資料から分からない項目）</span></div><div id="unk"></div>
@@ -387,7 +384,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.3</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.4</div>
 </div>
 </div>
 
@@ -905,8 +902,8 @@ function shOpen(sid,no,q){
 function mineCount(sec){return (sec.players||[]).filter(isMine).length}
 function ncourt(){var n=(ST.as&&ST.as.n)||0;(EV&&EV.sections||[]).forEach(function(sec){var v=parseInt(sec.court,10);if(!isNaN(v)&&v>n)n=v});return n}
 function r4(){
- if(!EV||!EV.sections){$('asn').textContent='—';$('assum').textContent='';$('asl').innerHTML='<div class="box"><div class="sm">大会データがありません。</div></div>';return}
- var n=ncourt(),unas=EV.sections.filter(function(x){return String(x.court)==='未定'}).length;$('asn').textContent=n+'面';$('assum').textContent=n+'面'+(unas?'・未定'+unas+'部':'');
+ if(!EV||!EV.sections){$('asn').textContent='—';$('asl').innerHTML='<div class="box"><div class="sm">大会データがありません。</div></div>';return}
+ var n=ncourt();$('asn').textContent=n+'面';
  var md=MODE();$('mdI').className=md==='interval'?'pri':'';$('mdS').className=md==='insert'?'pri':'';
  $('mdnote').textContent=md==='insert'?'準決勝と決勝（3位決定戦）などが連戦になるとき、同じ試合場の次の部の1試合目を先に行います。会場内の順番がその分ずれます。最後の部は連戦のままです。':'試合の順番は番号どおりに数えます。連戦になる所は、時間をあけて行う前提です。';
  var groups=['未定'];for(var i=1;i<=n;i++)groups.push(String(i));
@@ -1049,8 +1046,6 @@ window.T={
  setSpl:function(v){snap();if(!v&&ST.cp==='pm')doSwitch('am');ST.spl=v?'on':'off';SPLC=null;ST.mo=false;ST.sel=null;save();index();pairClear();render()},
  asMove:function(id,c){if(!EV)return;snap();asMaterialize();var as=ST.as,old=as.m[id]&&as.m[id].c;if(c==='未定'){as.m[id]={c:'未定',o:0}}else{var mx=-1;EV.sections.forEach(function(x){var a=as.m[x.id];if(x.id!==id&&a&&a.c===c)mx=Math.max(mx,a.o)});as.m[id]={c:c,o:mx+1}}asRenumber(c);if(old&&old!==c)asRenumber(old);asCommit()},
  asUp:function(id,d){if(!EV)return;snap();var as=ST.as,c=as.m[id]&&as.m[id].c;if(!c)return;asRenumber(c);var l=EV.sections.filter(function(x){return as.m[x.id]&&as.m[x.id].c===c}).sort(function(x,y){return as.m[x.id].o-as.m[y.id].o}),k=l.map(function(x){return x.id}).indexOf(id),j=k+d;if(j<0||j>=l.length)return;var t=as.m[l[k].id].o;as.m[l[k].id].o=as.m[l[j].id].o;as.m[l[j].id].o=t;asCommit()},
- asAuto:function(){if(!EV)return;var n=ncourt();if(n<1){toast('先に試合場の数を入れてください');return}snap();var as=ST.as;as.m={};['am','pm'].forEach(function(pt){var load=[],cnt=[];for(var i=0;i<n;i++){load.push(0);cnt.push(0)}EV.sections.filter(function(x){return secPart(x)===pt}).forEach(function(x){var b=0;for(var i=1;i<n;i++)if(load[i]<load[b])b=i;as.m[x.id]={c:String(b+1),o:cnt[b]++};load[b]+=nmatch(x)})});as.n=n;for(var c=1;c<=n;c++)asRenumber(String(c));asCommit();toast('振り分けました。部ごとに変えられます')},
- asClear:function(){if(!EV)return;snap();ST.as.m={};asCommit()},
  undo:function(){if(!HIST.length){toast('戻せる操作がありません');return}ST=JSON.parse(HIST.pop());fixST();save();render()},
  pick:function(k){ST.sel=k;save();r0()},
  res:function(key,t){
@@ -1075,7 +1070,7 @@ window.T={
  setNmd:function(v){snap();ST.nmd=v==='court'?'court':'sec';save();render()},
  setLcf:function(v){ss('lcf',parseInt(v,10)||0);render()},
  rdefSave:function(){if(!EV)return;ss('rdef',RULES());RN='いまの設定を、新しい大会の初期値にしました。';r3();toast('初期値にしました')},
- goAs:function(){T.tab(3);var e=$('asec');if(e){e.open=true;if(e.scrollIntoView)e.scrollIntoView()}},
+ goAs:function(){T.tab(3);var e=$('asec');if(e&&e.scrollIntoView)e.scrollIntoView()},
  lstX:function(){LSTX=!LSTX;render()},
  setRdl:function(v){ss('rdl',parseInt(v,10)||0);render()},
  setMt:function(v){snap();ST.mt=parseFloat(v)||0;save();render()},
