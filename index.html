@@ -226,6 +226,15 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 @media (prefers-color-scheme:dark){.rm{background:hsl(var(--h) var(--ds,52%) var(--dl,32%))}.rm.rmn{background:var(--in)}.rm.rm0{background:hsl(0 70% 52%)}}
 .rm.rmn{background:var(--in)}
 .rm.rm0{background:hsl(0 78% 46%)}
+/* v0.2.0 あと1〜5の色（今=あと1は同じ赤）と、行の枠着色 */
+.rm.ul1{background:#e8171c;color:#fff}
+.rm.ul2{background:#ff3d1a;color:#fff}
+.rm.ul3{background:#ff6a10;color:#fff}
+.rm.ul4{background:#ff9a0a;color:#2b1500}
+.rm.ul5{background:#ffc80a;color:#2b2000}
+.rw.ur1{--uc:#e8171c}.rw.ur2{--uc:#ff3d1a}.rw.ur3{--uc:#ff6a10}.rw.ur4{--uc:#ff9a0a}.rw.ur5{--uc:#ffc80a}
+.rw.ur{background:color-mix(in srgb,var(--uc) 16%,var(--in));box-shadow:inset 0 0 0 1.5px var(--uc)}
+.rw.sel.ur{box-shadow:inset 0 0 0 1.5px var(--uc),inset 0 0 0 3.5px var(--cc)}
 </style>
 </head>
 <body>
@@ -305,6 +314,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
     <div class="hd"><span>設定と保存</span></div>
     <div class="tg"><span>不戦の試合を番号から飛ばして数える</span><input type="checkbox" id="skip" onchange="T.setSkip(this.checked)"></div>
     <label class="fl2">試合時間（「なし」だと開始の目安の時刻は出しません）<select id="mt" onchange="T.setMt(this.value)"><option value="0">なし（時刻を出さない）</option><option value="1">1分</option><option value="1.5">1分30秒</option><option value="2">2分</option><option value="2.5">2分30秒</option><option value="3">3分</option><option value="3.5">3分30秒</option><option value="4">4分</option><option value="5">5分</option><option value="6">6分</option></select></label>
+    <label class="fl2">行の枠着色（「あと◯」がこの数以下の行。0で枠なし）<select id="bd" onchange="T.setBd(this.value)"><option value="0">0（枠なし）</option><option value="1">1（今・あと1）</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
     <div class="tg"><span>時刻に午前・午後を付ける</span><input type="checkbox" id="ampm" onchange="T.setAmpm(this.checked)"></div>
     <label class="fl2">ロスタイム<select id="lt" onchange="T.setLt(this.value)"><option value="on">あり（待てで時計が止まる）</option><option value="off">なし（流し・時間どおりに終わる）</option></select></label>
     <div class="sm" id="saveinfo" style="margin:4px 0 8px"></div>
@@ -312,7 +322,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
     <div class="row2"><button onclick="T.resetRes()">結果だけ消す</button><button onclick="T.resetAll()">全データを消す</button></div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.1.1</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.2.0</div>
 </div>
 </div>
 
@@ -341,7 +351,7 @@ function rm(k){delete mem[k];try{localStorage.removeItem(KEY+k)}catch(e){}}
 
 var EV=sg('event'),RO=sg('roster'),ST=sg('state')||{},HIST=[],COURTS=[],BYK={},RYOFF=0;
 var ORIG={};
-function fixST(){ST.as=ST.as||{n:0,m:{}};ST.as.m=ST.as.m||{};ST.done=ST.done||{};ST.res=ST.res||{};ST.out=ST.out||{};ST.skip=!!ST.skip;ST.sel=ST.sel||null;ST.ev=ST.ev||null;ST.chk=ST.chk||{};ST.tl=ST.tl||{};ST.mt=ST.mt||0;ST.lt=ST.lt||'on'}
+function fixST(){ST.as=ST.as||{n:0,m:{}};ST.as.m=ST.as.m||{};ST.done=ST.done||{};ST.res=ST.res||{};ST.out=ST.out||{};ST.skip=!!ST.skip;ST.sel=ST.sel||null;ST.ev=ST.ev||null;ST.chk=ST.chk||{};ST.tl=ST.tl||{};ST.mt=ST.mt||0;ST.lt=ST.lt||'on';ST.bd=(typeof ST.bd==='number'&&ST.bd>=0&&ST.bd<=5)?ST.bd:3}
 fixST();
 function save(){ss('state',ST);try{histCommit()}catch(e){}}
 function markDone(c,v){var o=ST.done[c]||0;ST.done[c]=v;var t=ST.tl[c]=ST.tl[c]||[];while(t.length&&t[t.length-1][0]>v)t.pop();if(v>0&&(!t.length||t[t.length-1][0]<v)){t.push([v,Date.now()]);if(t.length>8)t.shift()}}
@@ -474,7 +484,8 @@ function cfRender(act){
  msgs.sort(function(a,b){return (b.u?1:0)-(a.u?1:0)});
  bx.style.display='';bx.innerHTML='<div class="hd"><span>'+(msgs[0].u?'出番が重なりそうです':'複数の部に出る選手')+'</span></div>'+msgs.map(function(m){return '<div class="'+(m.u?'ng':'sm')+'" style="margin-bottom:6px">'+m.t+'</div>'}).join('')}
 function hueOf(r){if(r>=999||r<0)return -1;if(r<0)r=0;return Math.round(Math.min(r,8)/8*130)}
-function rmCls(r){return 'rm'+((r>=999||r<0)?' rmn':'')+(r===0?' rm0':'')}
+function ulv(r){return (r>=0&&r<=5)?Math.max(r,1):0}
+function rmCls(r){return 'rm'+((r>=999||r<0)?' rmn':'')+(r===0?' rm0':'')+(ulv(r)?' ul'+ulv(r):'')}
 function rmSty(r){var h=hueOf(r);if(h<0)return '';var l=r<=5?Math.round((56+Math.max(r,0)*3.5)*10)/10:80,dl=r<=5?Math.round((41-Math.max(r,0)*1.8)*10)/10:32,ds=r<=5?64:52;return '--h:'+h+';--l:'+l+'%;--dl:'+dl+'%;--ds:'+ds+'%'}
 function cls(r){return rmCls(r)}
 function remText(r){return r>=999?'試合順は会場で確認':r<0?'結果未入力':r===0?'今':'あと'+r+'試合'}
@@ -501,7 +512,7 @@ function r0(){
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='';act.forEach(function(it){
-  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'" style="'+rmSty(it.rem)+'">'+(it.rem>=999?'別':it.rem<0?'済?':it.rem===0?'今':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
+  var uv=ulv(it.rem),ur=(uv&&ST.bd>=uv)?' ur ur'+uv:'';l+='<div class="rw'+(f===it?' sel':'')+ur+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'" style="'+rmSty(it.rem)+'">'+(it.rem>=999?'別':it.rem<0?'済?':it.rem===0?'今':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
  $('lst').innerHTML=l||'<div class="sm">出番の選手はいません。</div>';
  var g='';COURTS.forEach(function(c){
   var d='',dn=ST.done[c.id]||0;
@@ -634,7 +645,7 @@ function r3(){
  if(EV&&EV.sections)EV.sections.forEach(function(sec){if(!sec.bronze||sec.bronze==='unknown')extra.push('三位の決め方：'+sec.name)});
  var all=u.concat(extra);
  $('unk').innerHTML=all.length?all.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span><span class="tag">不明</span></div>'}).join(''):'<div class="sm">なし</div>';
- $('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('ampm').checked=!!ST.ampm;$('lt').value=ST.lt||'on';
+ $('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('ampm').checked=!!ST.ampm;$('lt').value=ST.lt||'on';$('bd').value=String(ST.bd);
  $('saveinfo').textContent=storeOK?'結果は、この端末の中に自動で保存されています。':'この環境では保存できません。結果を書き出して控えてください。';
 }
 
@@ -852,6 +863,7 @@ window.T={
   if(rk!=null)markDone(c,Math.max(ST.done[c]||0,rk));
   ST.sel=null;LASTREC={sid:sec.id,no:no};save();render();
  },
+ setBd:function(v){snap();ST.bd=Math.max(0,Math.min(5,parseInt(v,10)||0));save();render()},
  setAmpm:function(v){snap();ST.ampm=!!v;save();render()},
  setMt:function(v){snap();ST.mt=parseFloat(v)||0;save();render()},
  setLt:function(v){snap();ST.lt=v==='off'?'off':'on';save();render()},
