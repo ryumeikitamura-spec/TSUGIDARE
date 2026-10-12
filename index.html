@@ -68,7 +68,6 @@ textarea{min-height:220px;line-height:1.75}
 .rw{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;margin:0 0 8px;border-radius:16px;background:var(--in);cursor:pointer;position:relative;overflow:hidden}
 .rw::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cc)}
 .rw.sel{background:color-mix(in srgb,var(--cc) 13%,var(--card));box-shadow:inset 0 0 0 1.5px var(--cc)}
-.rw>span:nth-child(2){line-height:1.35;font-size:16px;font-weight:700;min-width:0}
 .rw .sm{font-weight:500}
 .chip{min-width:56px;text-align:center;font-size:13px;font-weight:800;padding:6px 6px;border-radius:10px;flex:none}
 .rt{margin-left:auto;text-align:right;font-size:11px;color:var(--sub);line-height:1.4;flex:none}
@@ -133,6 +132,36 @@ details summary{list-style:none}details summary::-webkit-details-marker{display:
 body.dragging{user-select:none;-webkit-user-select:none}
 .asr select{font:inherit;font-size:14px;font-weight:600;color:var(--tx);background:var(--in);border:0;border-radius:12px;height:38px;padding:0 8px;max-width:104px}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:528px;margin:0 auto;background:rgba(28,30,36,.94);color:#fff;padding:12px 16px;border-radius:14px;font-size:14px;font-weight:600;z-index:50;display:none;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+
+/* compact */
+.wrap{padding:0 12px}
+header{margin:0 -12px 8px;padding:calc(6px + env(safe-area-inset-top)) 14px 6px}
+header b{font-size:17px}
+.box{padding:12px 14px;margin:0 0 10px;border-radius:18px}
+.hd{min-height:24px;margin:0 0 6px}
+.hero{padding:10px 14px 14px}
+.hero .hh{min-height:28px}
+.hero .nm{font-size:28px;margin:6px 0 0;line-height:1.2}
+.hero .vs{font-size:14px}
+.tiles{margin-top:10px;gap:8px}
+.tile{padding:7px 10px;border-radius:12px}
+.tile i{font-size:10.5px;margin-bottom:0}
+.tile b{font-size:17px}
+.tile u{display:none}
+.hero .w{margin-top:8px;font-size:12px}
+.bt{margin-top:10px;gap:8px}
+.bt button{height:50px;font-size:16px;border-radius:14px}
+.rw{gap:10px;padding:7px 12px 7px 14px;margin:0 0 6px;border-radius:14px}
+.rw::before{width:4px}
+.rw .n{flex:1;min-width:0;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rw .pl{flex:none;font-size:11px;padding:1px 8px 1px 6px}
+.rw .rt{margin-left:0;min-width:26px}
+.rw .rt b{font-size:14px}
+.chip{min-width:50px;font-size:12.5px;padding:4px 4px;border-radius:9px}
+.lane{margin:0 0 10px}
+.lh{margin-bottom:6px}
+.tabs button{height:50px}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 </style>
 </head>
 <body>
@@ -365,9 +394,6 @@ function mineItems(){
 }
 function etaHtml(f){var e=etaOf(f);return e?'<div class="tile"><i>開始の目安</i><b>'+e.t+'頃</b><u>'+(Math.round(e.m*10)/10)+'分/試合・'+(e.real?'実測':'設定値')+'</u></div>':''}
 function etaShort(it){var e=etaOf(it);return e?' ・'+e.t+'頃':''}
-function chkOf(k){return ST.chk[k]||{}}
-function chkHtml(f){var c=chkOf(f.key),k="'"+esc(f.key)+"'";return '<div class="ck">'+chp('召集済み',!!c.c,"T.chk("+k+",'c')")+chp('アップ済み',!!c.w,"T.chk("+k+",'w')")+'</div>'}
-function chkMark(it){var c=chkOf(it.key);return (c.c?' ✓召':'')+(c.w?' ✓ア':'')}
 function surname(n){return String(n||'').trim().split(/[\s　]+/)[0]}
 function cfRender(act){
  var bx=$('cfbox'),msgs=[],g={},sn={};
@@ -401,11 +427,11 @@ function r0(){
  var f=null;if(ST.sel)f=act.filter(function(i){return i.key===ST.sel})[0];if(!f)f=act[0];
  var b='';
  if(f){
-  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh">'+pill(f.cid)+'<span class="sm">'+esc(f.sec.name)+'・'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span><button class="s" onclick="T.undo()">一つ戻す</button></div><div class="nm">'+esc(f.p.name)+'</div><div class="vs">'+(f.opp?'対 '+esc(f.opp):'対戦相手は前の試合しだい')+'</div><div class="tiles"><div class="tile '+cls(f.rem)+'"><i>いま</i><b>'+remText(f.rem)+'</b></div>'+etaHtml(f)+'</div>'+chkHtml(f)+'<div class="w">'+(f.path.length?'勝てば次の試合　<b>'+f.path.join(', ')+'</b>':(f.st.third?'3位決定戦です':'この試合が決勝です'))+'</div><div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button></div></div>';
+  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh">'+pill(f.cid)+'<span class="sm">'+esc(f.sec.name)+'・'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span><button class="s" onclick="T.undo()">戻す</button></div><div class="nm">'+esc(f.p.name)+'</div><div class="vs">'+(f.opp?'対 '+esc(f.opp):'対戦相手は前の試合しだい')+'</div><div class="tiles"><div class="tile '+cls(f.rem)+'"><i>いま</i><b>'+remText(f.rem)+'</b></div>'+etaHtml(f)+'</div><div class="w">'+(f.path.length?'勝てば次の試合　<b>'+f.path.join(', ')+'</b>':(f.st.third?'3位決定戦です':'この試合が決勝です'))+'</div><div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button></div></div>';
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='';act.forEach(function(it){
-  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'">'+(it.rem>=999?'別':it.rem<=0?'次':'あと'+it.rem)+'</span><span>'+esc(it.p.name)+'<br>'+pill(it.cid)+' <span class="sm">'+(it.rk!=null?'第'+it.rk+'試合':'別会場')+etaShort(it)+chkMark(it)+'</span></span><span class="rt">'+(it.path.length?'次の試合<br><b>'+it.path.join(', ')+'</b>':(it.st.third?'<b>3位決定戦</b>':'<b>決勝</b>'))+'</span></div>'});
+  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'">'+(it.rem>=999?'別':it.rem<=0?'次':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?'第'+it.rk:'別')+'</b></span></div>'});
  $('lst').innerHTML=l||'<div class="sm">出番の選手はいません。</div>';
  var g='';COURTS.forEach(function(c){
   var d='',dn=ST.done[c.id]||0;
@@ -754,7 +780,6 @@ window.T={
   if(rk!=null)markDone(c,Math.max(ST.done[c]||0,rk));
   ST.sel=null;LASTREC={sid:sec.id,no:no};save();render();
  },
- chk:function(k,w){snap();var c=ST.chk[k]=ST.chk[k]||{};c[w]=c[w]?0:1;save();r0()},
  setAvg:function(v){v=parseFloat(v);if(!(v>=1&&v<=15)){toast('1〜15分で入れてください');r3();return}snap();ST.avg=v;save();render()},
  histClr:function(){if(!confirm('蓄積した戦績をすべて消します。大会データと名簿は残ります。よろしいですか？'))return;rm('hist');r2();toast('戦績を消しました')},
  dn:function(c,v){snap();markDone(c,Math.max(0,(ST.done[c]||0)+v));save();r0()},
