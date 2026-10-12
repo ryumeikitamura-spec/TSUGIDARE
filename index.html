@@ -358,7 +358,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
     <div class="row2"><button onclick="T.resetRes()">結果だけ消す</button><button onclick="T.resetAll()">全データを消す</button></div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.5.1</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.5.2</div>
 </div>
 </div>
 
@@ -599,7 +599,10 @@ function bracketSvg(sec){
  var heads={};
  roots.forEach(function(r){lay(r.no)});
  Object.keys(pos).forEach(function(k){var no=+k,m=mm[no],c=maxd-dep[no],P=pos[no];heads[c]=rshortD(dep[no]);
-  out.push(box(colX(c),P.ya,m.a,no));out.push(box(colX(c),P.yb,m.b,no));junction(no,c,P.ya,P.yb)});
+  [['a',P.ya],['b',P.yb]].forEach(function(z){var sl=m[z[0]],y=z[1];
+   if(c>0&&sl&&sl.player!=null){out.push(box(colX(0),y,sl,no));lines.push('<path class="bj" d="M'+(colX(0)+BW)+' '+y+'H'+(colX(c)+BW)+'"/>')}
+   else out.push(box(colX(c),y,sl,no))});
+  junction(no,c,P.ya,P.yb)});
  var H=TOP+row*ROWH+4;
  roots.forEach(function(r){var P=pos[r.no],w=winner(sec,r.no),x=colX(maxd+1),y=P.y-BH/2,p=w!=null?sec.pp[w]:null,cl='bk'+(p&&isMine(p)?' mine':'')+(p&&mk[sec.id+'|'+w]?' mk':'');
   out.push(p?'<g onclick="T.tbMk('+jq(String(sec.id))+','+jq(w)+')"><rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x+8)+'" y="'+(y+15)+'">'+(isMine(p)?'★ ':'')+esc(p.name)+'</text><text class="bkt" x="'+(x+8)+'" y="'+(y+29)+'">優勝</text></g>':'<g><rect class="bk empty" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bg" x="'+(x+8)+'" y="'+(P.y+4)+'">優勝</text></g>')});
