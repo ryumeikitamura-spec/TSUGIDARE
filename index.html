@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ツギダレ">
+<meta name="apple-mobile-web-app-title" content="次だれ？">
 <meta name="theme-color" content="#f2f3f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1015" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>ツギダレ</title>
+<title>次だれ？</title>
 <style>
 :root{--bg:#f2f3f7;--card:#fff;--tx:#14171c;--sub:#667085;--bd:#e3e6ec;--acc:#2358d6;--acct:#fff;--r1b:#fdeaea;--r1t:#c0281d;--r2b:#fff1d0;--r2t:#8a5a00;--r3b:#e1f5ea;--r3t:#15803d;--in:#eceff4;--sh:0 1px 2px rgba(16,24,40,.05),0 6px 18px rgba(16,24,40,.06)}
 @media (prefers-color-scheme:dark){:root{--bg:#0d1015;--card:#171b22;--tx:#eceff3;--sub:#9aa4b2;--bd:#262d37;--acc:#6aa2ff;--acct:#06101f;--r1b:#4a1d1d;--r1t:#ffb4ab;--r2b:#47390f;--r2t:#f5d27a;--r3b:#123524;--r3t:#86e0a8;--in:#222934;--sh:0 1px 2px rgba(0,0,0,.4)}}
@@ -202,7 +202,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 </head>
 <body>
 <div class="wrap">
-<header><b>ツギダレ</b><span class="sm" id="hsub"></span></header>
+<header><b>次だれ？</b><span class="sm" id="hsub"></span></header>
 
 <div class="pg on" id="p0">
   <div class="box" id="recbar" style="display:none"></div>
@@ -830,7 +830,7 @@ window.T={
  dlSample:function(){download('tsugidare-sample-event.json',sampleEv())},
  setSkip:function(v){snap();ST.skip=!!v;save();render()},
  exp:function(){var d=new Date();download('tsugidare-results-'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'.json',{app:'tsugidare',version:2,state:ST,event:EV,roster:RO,hist:sg('hist')||[]})},
- imp:function(inp){readFile(inp,function(d){if(!d||d.app!=='tsugidare'||!d.state){toast('ツギダレの書き出しファイルではありません');return}snap();if(d.event&&validateEv(d.event)===''){if(!EV||confirm('バックアップの大会データ・名簿で、いまのものを置き換えますか？\n「キャンセル」で結果だけ復元します。')){ORIG={};EV=d.event;ss('event',EV);if(d.roster){RO=d.roster;ss('roster',RO)}}}
+ imp:function(inp){readFile(inp,function(d){if(!d||d.app!=='tsugidare'||!d.state){toast('次だれ？のバックアップファイルではありません');return}snap();if(d.event&&validateEv(d.event)===''){if(!EV||confirm('バックアップの大会データ・名簿で、いまのものを置き換えますか？\n「キャンセル」で結果だけ復元します。')){ORIG={};EV=d.event;ss('event',EV);if(d.roster){RO=d.roster;ss('roster',RO)}}}
   if(Array.isArray(d.hist)&&d.hist.length)ss('hist',d.hist);
   ST=d.state;fixST();save();index();pairClear();render();toast('復元しました')})},
  resetRes:function(){if(!confirm('勝ち負けと試合数の記録を消します。大会データと名簿は残ります。よろしいですか？'))return;snap();var ev=ST.ev,as=ST.as;ST={};fixST();ST.ev=ev;ST.as=as;save();index();render()},
