@@ -194,7 +194,6 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .bt button.undo{flex:.8}
 
 /* v6 */
-.bt button.pri{background:color-mix(in srgb,var(--acc) 20%,var(--card));color:var(--acc);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 35%,transparent)}
 .rw .pl{font-size:16px;font-weight:700;padding:1px 8px 1px 7px;gap:5px}
 .rw .pl::before{width:9px;height:9px}
 .rw .rt b{font-size:17px;font-weight:800}
@@ -245,7 +244,8 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .bk{fill:var(--card);stroke:var(--bd);stroke-width:1.2;cursor:pointer}
 .bk.mine{fill:color-mix(in srgb,var(--acc) 14%,var(--card));stroke:var(--acc);stroke-width:2}
 .bk.mk{stroke:#f59e0b;stroke-width:2.5}
-.bk.empty{fill:none;stroke-dasharray:4 3;cursor:pointer}
+.bk.empty{fill:transparent;stroke-dasharray:4 3;cursor:pointer;pointer-events:all}
+.bq{font-size:11px;fill:var(--sub);opacity:.55;pointer-events:none}
 .bn{font-size:13px;font-weight:700;fill:var(--tx);pointer-events:none}
 .bkt{font-size:10.5px;fill:var(--sub);pointer-events:none}
 .bl .bk,.bl .bn,.bl .bkt{opacity:.45}
@@ -268,6 +268,16 @@ header #hdate .d{font-size:11px;color:var(--sub)}
 .tbm{margin-top:8px;display:flex;align-items:center;gap:8px}.tbm button{width:44px;height:36px;padding:0;flex:none}.tbm button[disabled]{opacity:.35}.tbm .chp{height:36px;margin:0;flex:none}
 .pth{font-size:20px;font-weight:800;margin:18px 4px 8px}.pth .sm{font-size:13px;font-weight:500}
 .mkt{display:block;font-size:11px;font-weight:500;color:#f59e0b;line-height:1.2}
+/* v0.9.2 日付欄は見た目を普通の文字にして、本物の日付入力は透明で重ねる（iPhoneで上寄せ・中央寄せになるのを避ける） */
+.dtw{position:relative;display:flex;align-items:center;justify-content:flex-start;width:100%;height:46px;margin-top:5px;padding:0 14px;background:var(--in);border-radius:12px;font-size:16px;font-weight:400;color:var(--tx);text-align:left;overflow:hidden}
+.dtw .dtv.ph{color:var(--sub)}
+.dtw:focus-within{box-shadow:0 0 0 2px var(--acc)}
+.fl2 .dti{position:absolute;left:0;top:0;width:100%;height:100%;margin:0;padding:0;opacity:0;border:0;font-size:16px}
+/* 大会タブ：試合場の割り当て（折りたたみ）の中は枠を重ねず、区切り線だけにする */
+#asec>summary .sm{margin-left:auto}
+#asec .asg{background:transparent;box-shadow:none;border-radius:0;border-top:1px solid var(--bd);margin:10px 0 0;padding:10px 0 0}
+#asec .pth{margin:14px 0 0}
+.sheetnote{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 0;font-size:16px}
 </style>
 </head>
 <body>
@@ -325,24 +335,11 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="row2"><label class="btn pri"><input type="file" accept=".json,application/json" hidden onchange="T.loadEv(this)">大会JSONを読み込む</label></div>
     <div class="row2"><button onclick="T.sample()">サンプルで試す</button><button onclick="T.dlSample()">サンプルJSONを保存</button></div>
   </div>
-  <div id="asec">
-  <div class="box">
-    <div class="hd"><span>試合場の数</span></div>
-    <div class="tg"><span class="sm">当日わかったら入れてください</span><span class="cs"><button onclick="T.asN(-1)" aria-label="減らす">−</button><b id="asn" style="min-width:56px;text-align:center"></b><button onclick="T.asN(1)" aria-label="増やす">＋</button></span></div>
-    <div class="row2"><button onclick="T.asAuto()">自動で振り分ける</button><button onclick="T.asClear()">割り当てを消す</button></div>
-    <div class="sm" style="margin-top:8px">自動は、試合数がなるべく均等になるよう、部の順に振り分けます。あとから部ごとに試合場と順番を変えられます。同じ試合場の中では、上の部から先に行われる想定です。</div>
-  </div>
-  <div class="box">
-    <div class="hd"><span>連戦になる所の扱い</span></div>
-    <div class="row2" style="margin-top:0"><button id="mdI" onclick="T.asMode('interval')">インターバル</button><button id="mdS" onclick="T.asMode('insert')">1試合はさむ</button></div>
-    <div class="sm" id="mdnote" style="margin-top:8px"></div>
-  </div>
-  <div id="asl"></div>
-  </div>
   <div class="box" id="rulebox">
     <div class="hd"><span>大会のルール</span><span class="sm">この大会だけ</span></div>
     <div class="sm" id="rulenote" style="margin:0 0 6px"></div>
     <div class="tg"><span>午前の部・午後の部に分ける（休憩をはさむ大会用）</span><input type="checkbox" id="spl" onchange="T.setSpl(this.checked)"></div>
+    <div class="fl2">連戦になる所の扱い<div class="row2" style="margin-top:5px"><button id="mdI" onclick="T.asMode('interval')">インターバル</button><button id="mdS" onclick="T.asMode('insert')">1試合はさむ</button></div><div class="sm" id="mdnote" style="margin-top:8px;font-weight:400"></div></div>
     <label class="fl2">試合時間（「なし」だと開始の目安の時刻は出しません）<select id="mt" onchange="T.setMt(this.value)"><option value="0">なし（時刻を出さない）</option><option value="1">1分</option><option value="1.5">1分30秒</option><option value="2">2分</option><option value="2.5">2分30秒</option><option value="3">3分</option><option value="3.5">3分30秒</option><option value="4">4分</option><option value="5">5分</option><option value="6">6分</option></select></label>
     <label class="fl2">ロスタイム<select id="lt" onchange="T.setLt(this.value)"><option value="on">あり（待てで時計が止まる）</option><option value="off">なし（流し・時間どおりに終わる）</option></select></label>
     <div class="tg"><span>不戦の試合を番号から飛ばして数える</span><input type="checkbox" id="skip" onchange="T.setSkip(this.checked)"></div>
@@ -350,6 +347,14 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="row2"><button onclick="T.rdefSave()">この設定を初期値にする</button></div>
     <div class="sm" style="margin-top:8px">大会名ごとに、設定した内容を自動で記録します（「第◯回」や年が違っても、同じ大会として扱います）。初めての大会は、初期値から始まります。</div>
   </div>
+  <details class="box" id="asec">
+    <summary class="hd"><span>試合場の割り当て</span><span class="sm" id="assum"></span></summary>
+    <div class="sm" style="margin:0 0 8px">ふだんは触りません。試合場の数や、部の振り分けを自分で決めるときだけ開いてください。</div>
+    <div class="tg"><span class="sm">当日わかったら入れてください</span><span class="cs"><button onclick="T.asN(-1)" aria-label="減らす">−</button><b id="asn" style="min-width:56px;text-align:center"></b><button onclick="T.asN(1)" aria-label="増やす">＋</button></span></div>
+    <div class="row2"><button onclick="T.asAuto()">自動で振り分ける</button><button onclick="T.asClear()">割り当てを消す</button></div>
+    <div class="sm" style="margin-top:8px">自動は、試合数がなるべく均等になるよう、部の順に振り分けます。あとから部ごとに試合場と順番を変えられます。同じ試合場の中では、上の部から先に行われる想定です。</div>
+    <div id="asl"></div>
+  </details>
   <details class="box"><summary class="hd"><span>検算・要確認（JSONを作った側の確認）</span></summary>
     <div class="hd" style="margin-top:8px"><span>検算</span></div><div id="chk"></div>
     <div class="hd" style="margin-top:12px"><span>要確認（資料から分からない項目）</span></div><div id="unk"></div>
@@ -385,7 +390,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.1</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.2</div>
 </div>
 </div>
 
@@ -616,7 +621,7 @@ function tbl(){
  if(TB.s==null||ord.indexOf(TB.s)<0)TB.s=ord[0];
  function op(x){return '<option value="'+esc(x.id)+'"'+(TB.s===String(x.id)?' selected':'')+'>'+(mine.indexOf(x)>=0?'★ ':'')+esc(x.name)+'（'+(x.players||[]).length+'人）</option>'}
  var ix=ord.indexOf(TB.s);
- pk.innerHTML='<div class="tbp"><select onchange="T.tbSec(this.value)" aria-label="部を選ぶ">'+(mine.length?'<optgroup label="自道場の選手がいる部">'+mine.map(op).join('')+'</optgroup>':'')+(oth.length?'<optgroup label="ほかの部">'+oth.map(op).join('')+'</optgroup>':'')+'</select></div><div class="tbm"><button onclick="T.tbStep(-1)" aria-label="前の部"'+(ix<=0?' disabled':'')+'>◀</button><button onclick="T.tbStep(1)" aria-label="次の部"'+(ix>=ord.length-1?' disabled':'')+'>▶</button>'+chp('結果入力',TB.mode!=='mk',"T.tbMode('in')")+chp('マーク',TB.mode==='mk',"T.tbMode('mk')")+'</div>';
+ pk.innerHTML='<div class="tbp"><select onchange="T.tbSec(this.value)" aria-label="部を選ぶ">'+(mine.length?'<optgroup label="自道場の選手がいる部">'+mine.map(op).join('')+'</optgroup>':'')+(oth.length?'<optgroup label="ほかの部">'+oth.map(op).join('')+'</optgroup>':'')+'</select></div><div class="tbm"><button onclick="T.tbStep(-1)" aria-label="前の部"'+(ix<=0?' disabled':'')+'>▲</button><button onclick="T.tbStep(1)" aria-label="次の部"'+(ix>=ord.length-1?' disabled':'')+'>▼</button>'+chp('結果入力',TB.mode!=='mk',"T.tbMode('in')")+chp('マーク',TB.mode==='mk',"T.tbMode('mk')")+'</div>';
  var sec=EV.sections.filter(function(x){return String(x.id)===TB.s})[0],fm=sec.format||'tournament';
  bx.style.display='';
  $('tbw').innerHTML=fm==='tournament'?bracketSvg(sec):'<div class="sm">トーナメント形式以外の部は、表を描けません。</div>';
@@ -641,9 +646,9 @@ function bracketSvg(sec){
  function box(x,yc,sl,no,tgt){
   var pid=sl?slot(sec,sl):null,p=pid!=null?sec.pp[pid]:null,y=yc-BH/2,cl='bk',g='';
   if(!p){
-   var lab=(sl&&sl.loser_of!=null)?'準決勝の敗者':(!sl?'不戦':'');
    var tn=tgt!=null?tgt:(sl&&sl.winner_of!=null?sl.winner_of:(sl&&sl.loser_of!=null?sl.loser_of:null));
-   return '<g'+(tn!=null?' onclick="T.tbOpen('+jq(String(sec.id))+','+jq(tn)+')"':'')+'><rect class="bk empty" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/>'+(lab?'<text class="bg" x="'+(x+8)+'" y="'+(yc+4)+'">'+lab+'</text>':'')+'</g>'}
+   var lab=tn!=null?((sl&&sl.loser_of!=null)?'準決勝の結果入力':'結果入力'):(!sl?'不戦':'');
+   return '<g'+(tn!=null?' onclick="T.tbOpen('+jq(String(sec.id))+','+jq(tn)+')"':'')+'><rect class="bk empty" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/>'+(lab?'<text class="'+(tn!=null?'bq':'bg')+'" x="'+(x+8)+'" y="'+(yc+4)+'">'+lab+'</text>':'')+'</g>'}
   if(isMine(p))cl+=' mine';if(mk[sec.id+'|'+pid])cl+=' mk';
   var w=no!=null?winner(sec,no):null,lost=(w!=null&&w!==pid);
   var nm=p.name,tm=p.team||'',tl=nm.length>7?' textLength="'+(BW-14)+'" lengthAdjust="spacingAndGlyphs"':'';
@@ -662,13 +667,13 @@ function bracketSvg(sec){
   junction(no,c,P.ya,P.yb)});
  var H=TOP+row*ROWH+4;
  roots.forEach(function(r){var P=pos[r.no],w=winner(sec,r.no),x=colX(maxd+1),y=P.y-BH/2,p=w!=null?sec.pp[w]:null,cl='bk'+(p&&isMine(p)?' mine':'')+(p&&mk[sec.id+'|'+w]?' mk':'');
-  out.push(p?'<g onclick="T.tbBox('+jq(String(sec.id))+','+jq(r.no)+','+jq(w)+')"><rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x+8)+'" y="'+(y+15)+'">'+(isMine(p)?'★ ':'')+esc(p.name)+'</text><text class="bkt" x="'+(x+8)+'" y="'+(y+29)+'">優勝</text></g>':'<g onclick="T.tbOpen('+jq(String(sec.id))+','+jq(r.no)+')"><rect class="bk empty" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bg" x="'+(x+8)+'" y="'+(P.y+4)+'">優勝</text></g>')});
+  out.push(p?'<g onclick="T.tbBox('+jq(String(sec.id))+','+jq(r.no)+','+jq(w)+')"><rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x+8)+'" y="'+(y+15)+'">'+(isMine(p)?'★ ':'')+esc(p.name)+'</text><text class="bkt" x="'+(x+8)+'" y="'+(y+29)+'">優勝</text></g>':'<g onclick="T.tbOpen('+jq(String(sec.id))+','+jq(r.no)+')"><rect class="bk empty" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bq" x="'+(x+8)+'" y="'+(P.y+4)+'">優勝 結果入力</text></g>')});
  heads[maxd+1]='優勝';
  if(sec.third){var t=sec.third,ya=H+ROWH*0.6,yb=ya+ROWH,c=maxd,tw=winner(sec,t.no);
   out.push('<text class="bh" x="'+(colX(c)+BW/2)+'" y="'+(ya-ROWH/2-4)+'">3位決定戦</text>');
   out.push(box(colX(c),ya,t.a,t.no));out.push(box(colX(c),yb,t.b,t.no));junction(t.no,c,ya,yb);
   var y3=(ya+yb)/2,p3=tw!=null?sec.pp[tw]:null,x3=colX(c+1);
-  out.push(p3?'<g><rect class="bk'+(isMine(p3)?' mine':'')+'" x="'+x3+'" y="'+(y3-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x3+8)+'" y="'+(y3-BH/2+15)+'">'+(isMine(p3)?'★ ':'')+esc(p3.name)+'</text><text class="bkt" x="'+(x3+8)+'" y="'+(y3-BH/2+29)+'">3位</text></g>':'<g onclick="T.tbOpen('+jq(String(sec.id))+','+jq(t.no)+')"><rect class="bk empty" x="'+x3+'" y="'+(y3-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bg" x="'+(x3+8)+'" y="'+(y3+4)+'">3位</text></g>');
+  out.push(p3?'<g><rect class="bk'+(isMine(p3)?' mine':'')+'" x="'+x3+'" y="'+(y3-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x3+8)+'" y="'+(y3-BH/2+15)+'">'+(isMine(p3)?'★ ':'')+esc(p3.name)+'</text><text class="bkt" x="'+(x3+8)+'" y="'+(y3-BH/2+29)+'">3位</text></g>':'<g onclick="T.tbOpen('+jq(String(sec.id))+','+jq(t.no)+')"><rect class="bk empty" x="'+x3+'" y="'+(y3-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bq" x="'+(x3+8)+'" y="'+(y3+4)+'">3位 結果入力</text></g>');
   H=yb+ROWH/2+4}
  var hd=Object.keys(heads).map(function(c){return '<text class="bh" x="'+(colX(+c)+BW/2)+'" y="14">'+heads[c]+'</text>'}).join('');
  var Wd=colX(maxd+2)-GAP+4;
@@ -704,7 +709,7 @@ function r0(){
   if(gd)wp.push(gd);
   if(gd||sr)wp.push('応援お願いします！');
   var wl=wp.length?'<div class="w">'+wp.join('　')+'</div>':'';
-  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh"><span class="sec">'+esc(f.sec.name)+'　'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span>'+(sr?'<span class="rtag">'+esc(f.ri.tag)+'</span>':'')+'</div><div class="nrow"><div class="nm">'+esc(f.p.name)+(f.mk?'<span class="mkt">'+esc(f.p.team||'マーク')+'</span>':'')+'</div><div class="vs"><div>'+(f.opp?'<span class="tai">対</span>'+esc(f.opp):'相手は前の試合しだい')+'</div><div class="tm">'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile t1 '+cls(f.rem)+'" style="'+rmSty(f.rem)+'"><i>'+(ee?'開始の目安 '+ee.t:'いま')+'</i><b>'+remText(f.rem)+'</b></div><div class="tile ct"><i>試合場</i><b>'+esc(clabel(f.cid))+'</b></div></div>'+wl+'<div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button><button class="undo" onclick="T.undo()">戻す</button></div></div>';
+  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh"><span class="sec">'+esc(f.sec.name)+'　'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span>'+(sr?'<span class="rtag">'+esc(f.ri.tag)+'</span>':'')+'</div><div class="nrow"><div class="nm">'+esc(f.p.name)+(f.mk?'<span class="mkt">'+esc(f.p.team||'マーク')+'</span>':'')+'</div><div class="vs"><div>'+(f.opp?'<span class="tai">対</span>'+esc(f.opp):'相手は前の試合しだい')+'</div><div class="tm">'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile t1 '+cls(f.rem)+'" style="'+rmSty(f.rem)+'"><i>'+(ee?'開始の目安 '+ee.t:'いま')+'</i><b>'+remText(f.rem)+'</b></div><div class="tile ct"><i>試合場</i><b>'+esc(clabel(f.cid))+'</b></div></div>'+wl+'<div class="bt"><button onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button><button class="undo" onclick="T.undo()">戻す</button></div></div>';
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='',LN=lcfGet();act.forEach(function(it,ix){if(LN>0&&!LSTX&&ix>=LN)return;
@@ -835,7 +840,7 @@ function r2(){
 /* ---------- データ画面 ---------- */
 function r3(){
  var info='<div class="sm">大会データなし</div>';
- if(EV){var e=EV.event||{};info='<label class="fl2">大会名<input type="text" value="'+esc(e.name||'')+'" placeholder="例：第◯回◯◯大会" onchange="T.evSet(\'name\',this.value)"></label><label class="fl2">開催日<input type="date" value="'+esc(e.date||'')+'" onchange="T.evSet(\'date\',this.value)"></label><label class="fl2">自道場の名前<input type="text" value="'+esc(e.club||'')+'" placeholder="所属名に含まれる名前" onchange="T.evSet(\'club\',this.value)"></label>'}
+ if(EV){var e=EV.event||{};info='<label class="fl2">大会名<input type="text" value="'+esc(e.name||'')+'" placeholder="例：第◯回◯◯大会" onchange="T.evSet(\'name\',this.value)"></label><label class="fl2">開催日<span class="dtw"><span class="dtv'+(e.date?'':' ph')+'">'+(e.date?esc(fmtDate(e.date)):'日付を選ぶ')+'</span><input type="date" class="dti" value="'+esc(e.date||'')+'" onchange="T.evSet(\'date\',this.value)" aria-label="開催日"></span></label><label class="fl2">自道場の名前<input type="text" value="'+esc(e.club||'')+'" placeholder="所属名に含まれる名前" onchange="T.evSet(\'club\',this.value)"></label>'}
  $('evinfo').innerHTML=info;
  var c='';
  if(EV&&EV.sections)EV.sections.forEach(function(sec){var np=(sec.players||[]).length,nm=(sec.matches||[]).filter(function(m){return !m.third}).length,ok=(sec.format||'tournament')!=='tournament'||nm===np-1;c+='<div class="dn"><span>'+esc(sec.name)+'<span class="sm">&nbsp;'+esc(clabel(sec.court))+'</span></span><span class="'+(ok?'ok':'ng')+'">人数'+np+'・試合数'+nm+(sec.third?'＋3位決定戦':'')+(ok?' OK':' 要確認')+'</span></div>'});
@@ -874,33 +879,37 @@ function shRender(){
    if(z[1]==null&&z[0]&&z[0].winner_of!=null){h+='<div>';subPlayers(sec,z[0].winner_of).forEach(function(p){if(pstate(sec,p).out)return;h+=chp(pname(sec,p)+(isMine(sec.pp[p])?' ★':''),false,'T.shPick('+z[0].winner_of+','+jq(p)+')')});h+='</div>'}
   });
   $('shp').innerHTML=h;$('sheet').style.display='block';return}
- var wo=SH.wo!=null;
- h+='<div class="shh">勝った人</div><div class="shw">';
- [pa,pb].forEach(function(p){var on=SH.w===p;h+='<button class="'+(on?'pri':'')+'" onclick="T.shW('+jq(p)+')">'+esc(pname(sec,p))+(sec.pp[p]&&sec.pp[p].team?'<span class="sm" style="display:block;color:inherit;opacity:.8">'+esc(sec.pp[p].team)+'</span>':'')+'</button>'});
- h+='</div><div class="shh">欠場した人（不戦勝になります）</div><div>';
- [pa,pb].forEach(function(p){h+=chp(pname(sec,p),SH.wo===p,'T.shWo('+jq(p)+')')});
- h+='</div><div class="shh">勝ち方</div><div>';
+ var wo=SH.wo!=null,qk=!!(SH.q&&SH.w!=null&&!wo);
+ if(qk){
+  h+='<div class="sheetnote"><span><b>'+esc(pname(sec,SH.w))+'</b>の勝ち</span><button class="s" onclick="T.shFull()">変更</button></div><div class="shh">勝ち方</div><div>';
+ }else{
+  h+='<div class="shh">勝った人</div><div class="shw">';
+  [pa,pb].forEach(function(p){var on=SH.w===p;h+='<button class="'+(on?'pri':'')+'" onclick="T.shW('+jq(p)+')">'+esc(pname(sec,p))+(sec.pp[p]&&sec.pp[p].team?'<span class="sm" style="display:block;color:inherit;opacity:.8">'+esc(sec.pp[p].team)+'</span>':'')+'</button>'});
+  h+='</div><div class="shh">欠場した人（不戦勝になります）</div><div>';
+  [pa,pb].forEach(function(p){h+=chp(pname(sec,p),SH.wo===p,'T.shWo('+jq(p)+')')});
+  h+='</div><div class="shh">勝ち方</div><div>';
+ }
  WAYS.forEach(function(w){h+=chp(w,SH.way===w,"T.shWay('"+w+"')",wo)});
  h+='</div><div class="shh">決まり技'+(SH.tech?'：'+esc(SH.tech):'')+'</div><div>';
  var el=isElem(sec)&&!SH.all;Object.keys(TECH).forEach(function(c){if(el&&(c==='絞技'||c==='関節技'))return;h+=chp(c,SH.cat===c,"T.shCat('"+c+"')",wo)});if(isElem(sec))h+=chp(SH.all?'絞技・関節技を隠す':'絞技・関節技も出す',false,"T.shAll()",wo);
  h+='</div><div>';
  (TECH[SH.cat]||[]).forEach(function(t){h+=chp(t,SH.tech===t,"T.shTech('"+t+"')",wo)});
- h+='</div><div class="row2" style="margin-top:14px"><button class="pri" onclick="T.shSave()">保存</button>'+(rs(sec,SH.no)?'<button onclick="T.shDel()">結果を消す</button>':'')+'</div>';
+ h+='</div><div class="row2" style="margin-top:14px"><button class="pri" onclick="T.shSave()">保存</button>'+(qk?'<button onclick="T.shClose()">あとで</button>':(rs(sec,SH.no)?'<button onclick="T.shDel()">結果を消す</button>':''))+'</div>';
  $('shp').innerHTML=h;$('sheet').style.display='block';
 }
 function isElem(sec){var n=String(sec.name||'');return n.indexOf('小')>=0&&!/中|高|一般/.test(n)}
-function shOpen(sid,no){
+function shOpen(sid,no,q){
  var sec=EV.sections.filter(function(x){return String(x.id)===String(sid)})[0];if(!sec)return;
  var r=rs(sec,no),w=r?winner(sec,no):null;
- SH={sec:sec,no:no,w:(r&&r.kind!=='wo')?w:null,wo:(r&&r.kind==='wo')?r.l:null,way:(r&&r.way)||'',tech:(r&&r.tech)||'',cat:'手技'};
+ SH={sec:sec,no:no,w:(r&&r.kind!=='wo')?w:null,wo:(r&&r.kind==='wo')?r.l:null,way:(r&&r.way)||'',tech:(r&&r.tech)||'',cat:'手技',q:!!q};
  if(SH.tech){Object.keys(TECH).forEach(function(c){if(TECH[c].indexOf(SH.tech)>=0){SH.cat=c;if(c==='絞技'||c==='関節技')SH.all=true}})}
  shRender();
 }
 function mineCount(sec){return (sec.players||[]).filter(isMine).length}
 function ncourt(){var n=(ST.as&&ST.as.n)||0;(EV&&EV.sections||[]).forEach(function(sec){var v=parseInt(sec.court,10);if(!isNaN(v)&&v>n)n=v});return n}
 function r4(){
- if(!EV||!EV.sections){$('asn').textContent='—';$('asl').innerHTML='<div class="box"><div class="sm">大会データがありません。</div></div>';return}
- var n=ncourt();$('asn').textContent=n+'面';
+ if(!EV||!EV.sections){$('asn').textContent='—';$('assum').textContent='';$('asl').innerHTML='<div class="sm" style="margin-top:8px">大会データがありません。</div>';return}
+ var n=ncourt(),unas=EV.sections.filter(function(x){return String(x.court)==='未定'}).length;$('asn').textContent=n+'面';$('assum').textContent=n+'面'+(unas?'・未定'+unas+'部':'');
  var md=MODE();$('mdI').className=md==='interval'?'pri':'';$('mdS').className=md==='insert'?'pri':'';
  $('mdnote').textContent=md==='insert'?'準決勝と決勝（3位決定戦）などが連戦になるとき、同じ試合場の次の部の1試合目を先に行います。会場内の順番がその分ずれます。最後の部は連戦のままです。':'試合の順番は番号どおりに数えます。連戦になる所は、時間をあけて行う前提です。';
  var groups=['未定'];for(var i=1;i<=n;i++)groups.push(String(i));
@@ -1014,6 +1023,7 @@ window.T={
   var rk=rank(sec,n);if(rk!=null){var c=String(sec.court);markDone(c,Math.max(ST.done[c]||0,rk))}
   save();render();shRender()},
  shClose:function(){SH=null;shRender()},
+ shFull:function(){if(!SH)return;SH.q=false;shRender()},
  shW:function(p){SH.w=SH.w===p?null:p;SH.wo=null;shRender()},
  shWo:function(p){SH.wo=SH.wo===p?null:p;if(SH.wo!=null){SH.w=null;SH.way='';SH.tech=''}shRender()},
  shWay:function(w){SH.way=SH.way===w?'':w;shRender()},
@@ -1052,6 +1062,7 @@ window.T={
   if(t===1)ST.res[k]={w:pid};else if(t===0)ST.res[k]={l:pid,w:null};else{ST.res[k]={l:pid,w:null,kind:'wo'};ST.out[sec.id+'|'+pid]=1}
   if(rk!=null)markDone(c,Math.max(ST.done[c]||0,rk));
   LASTREC={sid:sec.id,no:no};save();render();
+  if(t===1){var mt=sec.mm[no];if(mt&&slot(sec,mt.a)!=null&&slot(sec,mt.b)!=null)shOpen(sec.id,no,true)}
  },
  tbSec:function(id){TB.s=String(id);tbl()},
  tbStep:function(d){if(!EV)return;var mine=[],oth=[];EV.sections.forEach(function(x){((x.players||[]).some(isMine)?mine:oth).push(x)});var ord=mine.concat(oth).map(function(x){return String(x.id)}),k=ord.indexOf(TB.s)+d;if(k<0||k>=ord.length)return;TB.s=ord[k];tbl();window.scrollTo(0,0)},
@@ -1067,7 +1078,7 @@ window.T={
  setNmd:function(v){snap();ST.nmd=v==='court'?'court':'sec';save();render()},
  setLcf:function(v){ss('lcf',parseInt(v,10)||0);render()},
  rdefSave:function(){if(!EV)return;ss('rdef',RULES());RN='いまの設定を、新しい大会の初期値にしました。';r3();toast('初期値にしました')},
- goAs:function(){T.tab(3);var e=$('asec');if(e&&e.scrollIntoView)e.scrollIntoView()},
+ goAs:function(){T.tab(3);var e=$('asec');if(e){e.open=true;if(e.scrollIntoView)e.scrollIntoView()}},
  lstX:function(){LSTX=!LSTX;render()},
  setRdl:function(v){ss('rdl',parseInt(v,10)||0);render()},
  setMt:function(v){snap();ST.mt=parseFloat(v)||0;save();render()},
