@@ -198,6 +198,13 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .rw .pl::before{width:9px;height:9px}
 .rw .rt b{font-size:17px;font-weight:800}
 .rw .rt{min-width:20px}
+
+/* v7 gradient */
+.rm{background:hsl(var(--h) 88% 92%);color:hsl(var(--h) 80% 27%)}
+.rm.rmn{--h:0;background:var(--in);color:var(--sub)}
+.tile.rm i{color:inherit;opacity:.75}
+@media (prefers-color-scheme:dark){.rm{background:hsl(var(--h) 45% 22%);color:hsl(var(--h) 85% 76%)}.rm.rmn{background:var(--in);color:var(--sub)}}
+.fl2 select{display:block;width:100%;margin-top:5px;font:inherit;font-size:16px;color:var(--tx);background:var(--in);border:0;border-radius:12px;height:46px;padding:0 12px;outline:none;-webkit-appearance:none;appearance:none}
 </style>
 </head>
 <body>
@@ -279,7 +286,8 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   <div class="box">
     <div class="hd"><span>設定と保存</span></div>
     <div class="tg"><span>不戦の試合を番号から飛ばして数える</span><input type="checkbox" id="skip" onchange="T.setSkip(this.checked)"></div>
-    <label class="fl2">1試合にかかる時間の目安（分）。試合が進むと実測で自動補正します<input type="number" id="avg" min="1" max="15" step="0.5" inputmode="decimal" onchange="T.setAvg(this.value)"></label>
+    <label class="fl2">試合時間（「なし」だと開始の目安の時刻は出しません）<select id="mt" onchange="T.setMt(this.value)"><option value="0">なし（時刻を出さない）</option><option value="1">1分</option><option value="1.5">1分30秒</option><option value="2">2分</option><option value="2.5">2分30秒</option><option value="3">3分</option><option value="3.5">3分30秒</option><option value="4">4分</option><option value="5">5分</option><option value="6">6分</option></select></label>
+    <label class="fl2">ロスタイム<select id="lt" onchange="T.setLt(this.value)"><option value="on">あり（待てで時計が止まる）</option><option value="off">なし（流し・時間どおりに終わる）</option></select></label>
     <div class="sm" id="saveinfo" style="margin:4px 0 8px"></div>
     <div class="row2"><button onclick="T.exp()">全データをバックアップ</button><label class="btn"><input type="file" accept=".json,application/json" hidden onchange="T.imp(this)">バックアップを復元</label></div>
     <div class="row2"><button onclick="T.resetRes()">結果だけ消す</button><button onclick="T.resetAll()">全データを消す</button></div>
@@ -303,7 +311,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 (function(){
 'use strict';
 var KEY='tsugidare.v1.',mem={};
-var PAL=['#7F77DD','#1D9E75','#A0703F','#378ADD','#2F9FA8','#B0629A','#888780','#C48A00'];
+var PAL=['#2F6BE8','#C13E9A','#12A5C4','#8A56E8','#64748B','#4A4FD6','#8B6B4A','#0E7C86'];
 function $(i){return document.getElementById(i)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function sg(k){try{var v=localStorage.getItem(KEY+k);return v?JSON.parse(v):null}catch(e){return mem[k]||null}}
@@ -313,13 +321,14 @@ function rm(k){delete mem[k];try{localStorage.removeItem(KEY+k)}catch(e){}}
 
 var EV=sg('event'),RO=sg('roster'),ST=sg('state')||{},HIST=[],COURTS=[],BYK={},RYOFF=0;
 var ORIG={};
-function fixST(){ST.as=ST.as||{n:0,m:{}};ST.as.m=ST.as.m||{};ST.done=ST.done||{};ST.res=ST.res||{};ST.out=ST.out||{};ST.skip=!!ST.skip;ST.sel=ST.sel||null;ST.ev=ST.ev||null;ST.chk=ST.chk||{};ST.tl=ST.tl||{};ST.avg=ST.avg||5}
+function fixST(){ST.as=ST.as||{n:0,m:{}};ST.as.m=ST.as.m||{};ST.done=ST.done||{};ST.res=ST.res||{};ST.out=ST.out||{};ST.skip=!!ST.skip;ST.sel=ST.sel||null;ST.ev=ST.ev||null;ST.chk=ST.chk||{};ST.tl=ST.tl||{};ST.mt=ST.mt||0;ST.lt=ST.lt||'on'}
 fixST();
 function save(){ss('state',ST);try{histCommit()}catch(e){}}
 function markDone(c,v){var o=ST.done[c]||0;ST.done[c]=v;var t=ST.tl[c]=ST.tl[c]||[];while(t.length&&t[t.length-1][0]>v)t.pop();if(v>0&&(!t.length||t[t.length-1][0]<v)){t.push([v,Date.now()]);if(t.length>8)t.shift()}}
-function avgMin(c){var t=ST.tl[c]||[];if(t.length>=3){var a=t[0],b=t[t.length-1],d=(b[1]-a[1])/60000/(b[0]-a[0]);if(d>=1.5&&d<=15)return {m:d,real:true}}return {m:ST.avg||5,real:false}}
+function avgMin_old(c){var t=ST.tl[c]||[];if(t.length>=3){var a=t[0],b=t[t.length-1],d=(b[1]-a[1])/60000/(b[0]-a[0]);if(d>=1.5&&d<=15)return {m:d,real:true}}return {m:ST.avg||5,real:false}}
 function hm(ms){var d=new Date(ms);return d.getHours()+':'+('0'+d.getMinutes()).slice(-2)}
-function etaOf(it){if(it.rem==null||it.rem>=999||it.rem<0)return null;var a=avgMin(it.cid);return {t:hm(Date.now()+it.rem*a.m*60000),real:a.real,m:a.m}}
+function avgMin(c){if(!ST.mt)return null;if(ST.lt!=='off'){var t=ST.tl[c]||[];if(t.length>=3){var a=t[0],b=t[t.length-1],d=(b[1]-a[1])/60000/(b[0]-a[0]);if(d>=0.5&&d<=15)return {m:d,real:true}}}return {m:ST.mt,real:false}}
+function etaOf(it){if(it.rem==null||it.rem>=999||it.rem<0)return null;var a=avgMin(it.cid);if(!a)return null;return {t:hm(Date.now()+it.rem*a.m*60000),real:a.real,m:a.m}}
 function snap(){HIST.push(JSON.stringify(ST));if(HIST.length>60)HIST.shift()}
 function toast(t){var e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.display='none'},3200)}
 
@@ -444,7 +453,10 @@ function cfRender(act){
  if(!msgs.length){bx.style.display='none';return}
  msgs.sort(function(a,b){return (b.u?1:0)-(a.u?1:0)});
  bx.style.display='';bx.innerHTML='<div class="hd"><span>'+(msgs[0].u?'出番が重なりそうです':'複数の部に出る選手')+'</span></div>'+msgs.map(function(m){return '<div class="'+(m.u?'ng':'sm')+'" style="margin-bottom:6px">'+m.t+'</div>'}).join('')}
-function cls(r){return r<=1?'r1':r<=4?'r2':'r3'}
+function hueOf(r){if(r>=999)return -1;if(r<0)r=0;return Math.round(Math.min(r,8)/8*130)}
+function rmCls(r){return 'rm'+(r>=999?' rmn':'')}
+function rmSty(r){var h=hueOf(r);return h<0?'':'--h:'+h}
+function cls(r){return rmCls(r)}
 function remText(r){return r>=999?'試合順は会場で確認':r<0?'試合中かも':r===0?'次が出番':'あと'+r+'試合'}
 function pill(cid){return '<span class="pl" style="--cc:'+court(cid).color+'">'+esc(clabel(cid))+'</span>'}
 function grade(){}
@@ -465,17 +477,17 @@ function r0(){
  var b='';
  if(f){
   var ee=etaOf(f);
-  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh"><span class="sec">'+esc(f.sec.name)+'　'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span></div><div class="nrow"><div class="nm">'+esc(f.p.name)+'</div><div class="vs"><div>'+(f.opp?'<span class="tai">対</span>'+esc(f.opp):'相手は前の試合しだい')+'</div><div class="tm">'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile t1 '+cls(f.rem)+'"><i>'+(ee?'開始の目安 '+ee.t:'いま')+'</i><b>'+remText(f.rem)+'</b></div><div class="tile ct"><i>試合場</i><b>'+esc(clabel(f.cid))+'</b></div></div><div class="w">'+(f.path.length?'次の試合　<b>'+f.path.join(', ')+'</b>':(f.st.third?'3位決定戦です':'この試合が決勝です'))+'</div><div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button><button class="undo" onclick="T.undo()">戻す</button></div></div>';
+  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh"><span class="sec">'+esc(f.sec.name)+'　'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span></div><div class="nrow"><div class="nm">'+esc(f.p.name)+'</div><div class="vs"><div>'+(f.opp?'<span class="tai">対</span>'+esc(f.opp):'相手は前の試合しだい')+'</div><div class="tm">'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile t1 '+cls(f.rem)+'" style="'+rmSty(f.rem)+'"><i>'+(ee?'開始の目安 '+ee.t:'いま')+'</i><b>'+remText(f.rem)+'</b></div><div class="tile ct"><i>試合場</i><b>'+esc(clabel(f.cid))+'</b></div></div><div class="w">'+(f.path.length?'次の試合　<b>'+f.path.join(', ')+'</b>':(f.st.third?'3位決定戦です':'この試合が決勝です'))+'</div><div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button><button class="undo" onclick="T.undo()">戻す</button></div></div>';
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='';act.forEach(function(it){
-  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'">'+(it.rem>=999?'別':it.rem<=0?'次':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
+  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'" style="'+rmSty(it.rem)+'">'+(it.rem>=999?'別':it.rem<=0?'次':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
  $('lst').innerHTML=l||'<div class="sm">出番の選手はいません。</div>';
  var g='';COURTS.forEach(function(c){
   var d='',dn=ST.done[c.id]||0;
   act.filter(function(it){return it.cid===c.id&&it.rk!=null}).forEach(function(it){d+='<div class="dt" style="left:'+Math.min(97,Math.max(2,it.rk/c.max*100))+'%">'+esc(it.p.name.charAt(0))+'</div>'});
   g+='<div class="lane" style="--cc:'+c.color+'"><div class="lh">'+pill(c.id)+'<span class="c"><button onclick="T.dn(\''+esc(c.id)+'\',-1)" aria-label="減らす">−</button><b style="min-width:62px;text-align:center">'+dn+'試合済</b><button onclick="T.dn(\''+esc(c.id)+'\',1)" aria-label="増やす">＋</button></span></div><div class="tr"><div class="fl" style="width:'+Math.min(100,dn/c.max*100)+'%"></div>'+d+'</div></div>'});
- $('lan').innerHTML=g+'<div class="sm">開始の目安は、'+(COURTS.some(function(c){return avgMin(c.id).real})?'試合場ごとの実測ペース（実測できない試合場は設定値）':'設定値（'+(ST.avg||5)+'分/試合）')+'から出しています。あくまで目安です。</div>';cfRender(act);
+ $('lan').innerHTML=g+(ST.mt?'<div class="sm">開始の目安は、'+(ST.lt==='off'?'試合時間（ロスタイムなし）どおりに進む前提':(COURTS.some(function(c){var a=avgMin(c.id);return a&&a.real})?'試合場ごとの実測ペース（実測できない試合場は設定した試合時間）':'設定した試合時間（ロスタイムありは、進行が3回以上更新されると実測に切り替わります）'))+'で出しています。あくまで目安です。</div>':'');cfRender(act);
  var e='';dn.forEach(function(it){
   var lab=it.st.champ?'優勝':it.st.wd?'欠場':it.st.bronze?'3位':(wins(it.sec,it.p.id)===0?'初戦敗退':wins(it.sec,it.p.id)+'勝で敗退');
   e+='<div class="dn'+(it.st.champ?'':' out')+'"><span>'+esc(it.p.name)+'<span class="sm">（'+esc(it.sec.name)+'）</span></span><span class="sm">'+lab+'</span></div>'});
@@ -601,7 +613,7 @@ function r3(){
  if(EV&&EV.sections)EV.sections.forEach(function(sec){if(!sec.bronze||sec.bronze==='unknown')extra.push('三位の決め方：'+sec.name)});
  var all=u.concat(extra);
  $('unk').innerHTML=all.length?all.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span><span class="tag">不明</span></div>'}).join(''):'<div class="sm">なし</div>';
- $('skip').checked=!!ST.skip;$('avg').value=ST.avg||5;
+ $('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('lt').value=ST.lt||'on';
  $('saveinfo').textContent=storeOK?'結果は、この端末の中に自動で保存されています。':'この環境では保存できません。結果を書き出して控えてください。';
 }
 
@@ -818,7 +830,8 @@ window.T={
   if(rk!=null)markDone(c,Math.max(ST.done[c]||0,rk));
   ST.sel=null;LASTREC={sid:sec.id,no:no};save();render();
  },
- setAvg:function(v){v=parseFloat(v);if(!(v>=1&&v<=15)){toast('1〜15分で入れてください');r3();return}snap();ST.avg=v;save();render()},
+ setMt:function(v){snap();ST.mt=parseFloat(v)||0;save();render()},
+ setLt:function(v){snap();ST.lt=v==='off'?'off':'on';save();render()},
  histClr:function(){if(!confirm('蓄積した戦績をすべて消します。大会データと名簿は残ります。よろしいですか？'))return;rm('hist');r2();toast('戦績を消しました')},
  dn:function(c,v){snap();markDone(c,Math.max(0,(ST.done[c]||0)+v));save();r0()},
  pairIn:pairIn,pairPick:pairPick,pairApply:pairApply,pairWin:pairWin,pairClear:pairClear,
