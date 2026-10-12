@@ -205,6 +205,13 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .tile.rm i{color:inherit;opacity:.75}
 @media (prefers-color-scheme:dark){.rm{background:hsl(var(--h) 45% 22%);color:hsl(var(--h) 85% 76%)}.rm.rmn{background:var(--in);color:var(--sub)}}
 .fl2 select{display:block;width:100%;margin-top:5px;font:inherit;font-size:16px;color:var(--tx);background:var(--in);border:0;border-radius:12px;height:46px;padding:0 12px;outline:none;-webkit-appearance:none;appearance:none}
+
+.rm.rm0{background:hsl(0 78% 46%);color:#fff}
+.tile.rm.rm0 i{opacity:.85}
+@media (prefers-color-scheme:dark){.rm.rm0{background:hsl(0 70% 52%);color:#fff}}
+#hsub{text-align:right;line-height:1.25;white-space:normal;max-width:60%}
+#hsub .h1{display:block;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#hsub .h2{display:block;font-size:11px;font-weight:500}
 </style>
 </head>
 <body>
@@ -219,11 +226,8 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   <div class="box" id="lstbox"><div class="hd"><span>道場生の出番（タップで上に表示）</span></div><div id="lst"></div></div>
   <div class="box" id="lanbox"><div class="hd"><span>会場の進行（終了した試合数）</span></div><div id="lan"></div></div>
   <div class="box" id="pairbox">
-    <div class="hd"><span>対戦する2人から進行を更新</span><button class="s" onclick="T.pairClear()">入れ直す</button></div>
-    <input type="text" id="qa" placeholder="1人目（漢字・ひらがな）" oninput="T.pairIn('a')" autocomplete="off">
-    <div class="cs" id="ca"></div>
-    <input type="text" id="qb" placeholder="2人目" oninput="T.pairIn('b')" autocomplete="off">
-    <div class="cs" id="cb"></div>
+    <div class="hd"><span>2人を選んで進行を更新</span><button class="s" onclick="T.pairClear()">入れ直す</button></div>
+    <div id="pairsel"></div>
     <div id="pres"></div>
   </div>
   <div class="box" id="dnbox"><div class="hd"><span>終了した選手</span></div><div id="dn"></div></div>
@@ -453,11 +457,11 @@ function cfRender(act){
  if(!msgs.length){bx.style.display='none';return}
  msgs.sort(function(a,b){return (b.u?1:0)-(a.u?1:0)});
  bx.style.display='';bx.innerHTML='<div class="hd"><span>'+(msgs[0].u?'出番が重なりそうです':'複数の部に出る選手')+'</span></div>'+msgs.map(function(m){return '<div class="'+(m.u?'ng':'sm')+'" style="margin-bottom:6px">'+m.t+'</div>'}).join('')}
-function hueOf(r){if(r>=999)return -1;if(r<0)r=0;return Math.round(Math.min(r,8)/8*130)}
-function rmCls(r){return 'rm'+(r>=999?' rmn':'')}
+function hueOf(r){if(r>=999||r<0)return -1;if(r<0)r=0;return Math.round(Math.min(r,8)/8*130)}
+function rmCls(r){return 'rm'+((r>=999||r<0)?' rmn':'')+(r===0?' rm0':'')}
 function rmSty(r){var h=hueOf(r);return h<0?'':'--h:'+h}
 function cls(r){return rmCls(r)}
-function remText(r){return r>=999?'試合順は会場で確認':r<0?'試合中かも':r===0?'次が出番':'あと'+r+'試合'}
+function remText(r){return r>=999?'試合順は会場で確認':r<0?'結果未入力':r===0?'今':'あと'+r+'試合'}
 function pill(cid){return '<span class="pl" style="--cc:'+court(cid).color+'">'+esc(clabel(cid))+'</span>'}
 function grade(){}
 
@@ -481,13 +485,13 @@ function r0(){
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='';act.forEach(function(it){
-  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'" style="'+rmSty(it.rem)+'">'+(it.rem>=999?'別':it.rem<=0?'次':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
+  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'" style="'+rmSty(it.rem)+'">'+(it.rem>=999?'別':it.rem<0?'済?':it.rem===0?'今':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
  $('lst').innerHTML=l||'<div class="sm">出番の選手はいません。</div>';
  var g='';COURTS.forEach(function(c){
   var d='',dn=ST.done[c.id]||0;
   act.filter(function(it){return it.cid===c.id&&it.rk!=null}).forEach(function(it){d+='<div class="dt" style="left:'+Math.min(97,Math.max(2,it.rk/c.max*100))+'%">'+esc(it.p.name.charAt(0))+'</div>'});
   g+='<div class="lane" style="--cc:'+c.color+'"><div class="lh">'+pill(c.id)+'<span class="c"><button onclick="T.dn(\''+esc(c.id)+'\',-1)" aria-label="減らす">−</button><b style="min-width:62px;text-align:center">'+dn+'試合済</b><button onclick="T.dn(\''+esc(c.id)+'\',1)" aria-label="増やす">＋</button></span></div><div class="tr"><div class="fl" style="width:'+Math.min(100,dn/c.max*100)+'%"></div>'+d+'</div></div>'});
- $('lan').innerHTML=g+(ST.mt?'<div class="sm">開始の目安は、'+(ST.lt==='off'?'試合時間（ロスタイムなし）どおりに進む前提':(COURTS.some(function(c){var a=avgMin(c.id);return a&&a.real})?'試合場ごとの実測ペース（実測できない試合場は設定した試合時間）':'設定した試合時間（ロスタイムありは、進行が3回以上更新されると実測に切り替わります）'))+'で出しています。あくまで目安です。</div>':'');cfRender(act);
+ $('lan').innerHTML=g+(ST.mt?'<div class="sm">開始の目安は、'+(ST.lt==='off'?'試合時間（ロスタイムなし）どおりに進む前提':(COURTS.some(function(c){var a=avgMin(c.id);return a&&a.real})?'試合場ごとの実測ペース（実測できない試合場は設定した試合時間）':'設定した試合時間（ロスタイムありは、進行が3回以上更新されると実測に切り替わります）'))+'で出しています。あくまで目安です。</div>':'');cfRender(act);pairRender();
  var e='';dn.forEach(function(it){
   var lab=it.st.champ?'優勝':it.st.wd?'欠場':it.st.bronze?'3位':(wins(it.sec,it.p.id)===0?'初戦敗退':wins(it.sec,it.p.id)+'勝で敗退');
   e+='<div class="dn'+(it.st.champ?'':' out')+'"><span>'+esc(it.p.name)+'<span class="sm">（'+esc(it.sec.name)+'）</span></span><span class="sm">'+lab+'</span></div>'});
@@ -495,25 +499,26 @@ function r0(){
 }
 
 /* ---------- 名前から進行を更新 ---------- */
-var PA=null,PB=null,CAND={a:[],b:[]},CUR=null;
+var PA=null,PB=null,CAND={a:[],b:[]},CUR=null,PF={c:null,s:null};
 function allPlayers(){var r=[];EV.sections.forEach(function(sec){(sec.players||[]).forEach(function(p){r.push({sec:sec,p:p,key:sec.id+'|'+p.id})})});return r}
-function pairIn(w){
- var q=norm($(w==='a'?'qa':'qb').value),o=w==='a'?PB:PA;
- if(w==='a')PA=null;else PB=null;
- var r=[];
- if(q&&EV)r=allPlayers().filter(function(x){if(o&&x.sec!==o.sec)return false;var hay=norm(x.p.name)+'|'+norm(x.p.reading||'')+'|'+norm(roReading(x.p.name));return hay.indexOf(q)>=0}).slice(0,8);
- CAND[w]=r;
- $(w==='a'?'ca':'cb').innerHTML=r.map(function(x,i){return '<button onclick="T.pairPick(\''+w+'\','+i+')">'+esc(x.p.name)+'<span class="sm">&nbsp;'+esc(x.p.team||'')+'</span></button>'}).join('')||(q?'<span class="sm">該当なし。漢字の一部かひらがなで探してください。</span>':'');
- pairUpd();
+function pairRender(){
+ var bx=$('pairsel');if(!bx)return;if(!EV||!EV.sections){bx.innerHTML='';return}
+ var secs=EV.sections.filter(function(x){return PF.c==null||String(x.court)===String(PF.c)});
+ if(PF.s!=null&&!secs.some(function(x){return String(x.id)===String(PF.s)}))PF.s=null;
+ var h='<div class="shh" style="margin-top:0">試合場</div><div>'+chp('すべて',PF.c==null,"T.pf('c','')");
+ COURTS.forEach(function(c){h+=chp(clabel(c.id),String(PF.c)===c.id,"T.pf('c',"+jq(c.id)+")")});
+ h+='</div><div class="shh">部</div><div>';
+ secs.forEach(function(x){h+=chp(x.name+(mineCount(x)?' ★':''),String(PF.s)===String(x.id),"T.pf('s',"+jq(x.id)+")")});
+ h+='</div>';
+ if(PF.s!=null){var sec=EV.sections.filter(function(x){return String(x.id)===String(PF.s)})[0];
+  var ps=(sec.players||[]).slice().sort(function(a,b){return (isMine(b)?1:0)-(isMine(a)?1:0)});
+  var n=(PA?1:0)+(PB?1:0);
+  h+='<div class="shh">この部の選手から2人を選ぶ（'+n+'/2・自道場は★）</div><div>';
+  ps.forEach(function(p){var key=sec.id+'|'+p.id,on=(PA&&PA.key===key)||(PB&&PB.key===key);h+=chp(p.name+(isMine(p)?' ★':''),on,"T.pp("+jq(sec.id)+","+jq(p.id)+")")});
+  h+='</div>'}
+ bx.innerHTML=h;
 }
-function pairPick(w,i){
- var x=CAND[w][i];if(w==='a')PA=x;else PB=x;
- $(w==='a'?'qa':'qb').value=x.p.name;$(w==='a'?'ca':'cb').innerHTML='';
- var oi=w==='a'?'qb':'qa';
- if(w==='a'&&PB&&PB.sec!==x.sec){PB=null;$(oi).value=''}
- if(w==='b'&&PA&&PA.sec!==x.sec){PA=null;$(oi).value=''}
- pairUpd();
-}
+function pairUpdAll(){pairRender();pairUpd()}
 function chain(sec,pid){var r=[],n=sec.leaf[pid];while(n!=null){r.push(n);n=sec.par[n]}return r}
 function pairUpd(){
  CUR=null;var e=$('pres');
@@ -535,7 +540,7 @@ function pairWin(w){
  if(CUR.rk!=null){var c=String(CUR.sec.court);markDone(c,Math.max(ST.done[c]||0,CUR.rk))}
  LASTREC={sid:CUR.sec.id,no:CUR.no};save();toast(x.p.name+'の勝ちを記録しました');pairClear();render();
 }
-function pairClear(){PA=PB=null;CUR=null;['qa','qb'].forEach(function(i){var e=$(i);if(e)e.value=''});['ca','cb','pres'].forEach(function(i){$(i).innerHTML=''})}
+function pairClear(){PA=PB=null;CUR=null;$('pres').innerHTML='';pairRender()}
 
 /* ---------- 連絡文 ---------- */
 function gen(){
@@ -776,8 +781,9 @@ function sampleEv(){
 function sampleRo(){return {club:'サンプル道場',base_year:evYear(),members:[{name:'見本 太郎',reading:'みほんたろう',grade:3},{name:'見本 花子',reading:'みほんはなこ',grade:3},{name:'例文 乙',reading:'',grade:7},{name:'標本 柿',reading:'ひょうほんかき',grade:8},{name:'例題 梅子',reading:'れいだいうめこ',grade:3}]}}
 function download(name,obj){try{var b=new Blob([JSON.stringify(obj,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(a.href)},500)}catch(e){toast('書き出せませんでした')}}
 
+function fmtDate(ds){if(!ds)return '';var d=new Date(ds+'T00:00:00');if(isNaN(d.getTime()))return ds;return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+'（'+'日月火水木金土'.charAt(d.getDay())+'）'}
 function render(){
- $('hsub').textContent=EV&&EV.event?(EV.event.name||''):'';
+ $('hsub').innerHTML=EV&&EV.event?'<span class="h1">'+esc(EV.event.name||'')+'</span><span class="h2">'+esc(fmtDate(EV.event.date))+'</span>':'';
  r0();r2();r3();r4();r5();
 }
 
@@ -834,7 +840,9 @@ window.T={
  setLt:function(v){snap();ST.lt=v==='off'?'off':'on';save();render()},
  histClr:function(){if(!confirm('蓄積した戦績をすべて消します。大会データと名簿は残ります。よろしいですか？'))return;rm('hist');r2();toast('戦績を消しました')},
  dn:function(c,v){snap();markDone(c,Math.max(0,(ST.done[c]||0)+v));save();r0()},
- pairIn:pairIn,pairPick:pairPick,pairApply:pairApply,pairWin:pairWin,pairClear:pairClear,
+ pf:function(k,v){PF[k]=v===''?null:v;if(k==='c')PF.s=null;PA=PB=null;pairUpdAll()},
+ pp:function(sid,pid){var sec=EV.sections.filter(function(x){return String(x.id)===String(sid)})[0];if(!sec)return;var key=sec.id+'|'+pid,x={sec:sec,p:sec.pp[pid],key:key};if(PA&&PA.key===key){PA=PB;PB=null}else if(PB&&PB.key===key){PB=null}else if(!PA)PA=x;else PB=x;pairUpdAll()},
+ pairApply:pairApply,pairWin:pairWin,pairClear:pairClear,
  gen:gen,copy:copy,
  ryear:function(d){RYOFF=d===0?0:RYOFF+d;r2()},
  loadEv:function(inp){readFile(inp,function(d){var e=validateEv(d);if(e){toast('大会JSONを読み込めません：'+e);return}var has=ST.as&&Object.keys(ST.as.m).length;if(has&&d.sections.some(function(x){return String(x.court)!=='未定'})&&confirm('いまの試合場の割り当てを、読み込むファイルの試合場で置き換えますか？\n「キャンセル」で今の割り当てを残します。')){ST.as.m={};ST.as.n=0}setEv(d);toast('大会データを読み込みました')})},
