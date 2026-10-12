@@ -297,6 +297,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
     <div class="hd"><span>設定と保存</span></div>
     <div class="tg"><span>不戦の試合を番号から飛ばして数える</span><input type="checkbox" id="skip" onchange="T.setSkip(this.checked)"></div>
     <label class="fl2">試合時間（「なし」だと開始の目安の時刻は出しません）<select id="mt" onchange="T.setMt(this.value)"><option value="0">なし（時刻を出さない）</option><option value="1">1分</option><option value="1.5">1分30秒</option><option value="2">2分</option><option value="2.5">2分30秒</option><option value="3">3分</option><option value="3.5">3分30秒</option><option value="4">4分</option><option value="5">5分</option><option value="6">6分</option></select></label>
+    <div class="tg"><span>時刻に午前・午後を付ける</span><input type="checkbox" id="ampm" onchange="T.setAmpm(this.checked)"></div>
     <label class="fl2">ロスタイム<select id="lt" onchange="T.setLt(this.value)"><option value="on">あり（待てで時計が止まる）</option><option value="off">なし（流し・時間どおりに終わる）</option></select></label>
     <div class="sm" id="saveinfo" style="margin:4px 0 8px"></div>
     <div class="row2"><button onclick="T.exp()">全データをバックアップ</button><label class="btn"><input type="file" accept=".json,application/json" hidden onchange="T.imp(this)">バックアップを復元</label></div>
@@ -336,7 +337,7 @@ fixST();
 function save(){ss('state',ST);try{histCommit()}catch(e){}}
 function markDone(c,v){var o=ST.done[c]||0;ST.done[c]=v;var t=ST.tl[c]=ST.tl[c]||[];while(t.length&&t[t.length-1][0]>v)t.pop();if(v>0&&(!t.length||t[t.length-1][0]<v)){t.push([v,Date.now()]);if(t.length>8)t.shift()}}
 function avgMin_old(c){var t=ST.tl[c]||[];if(t.length>=3){var a=t[0],b=t[t.length-1],d=(b[1]-a[1])/60000/(b[0]-a[0]);if(d>=1.5&&d<=15)return {m:d,real:true}}return {m:ST.avg||5,real:false}}
-function hm(ms){var d=new Date(ms);return d.getHours()+':'+('0'+d.getMinutes()).slice(-2)}
+function hm(ms){var d=new Date(ms),h=d.getHours(),m=('0'+d.getMinutes()).slice(-2);if(ST.ampm)return (h<12?'午前':'午後')+(h%12===0?12:h%12)+':'+m;return h+':'+m}
 function avgMin(c){if(!ST.mt)return null;if(ST.lt!=='off'){var t=ST.tl[c]||[];if(t.length>=3){var a=t[0],b=t[t.length-1],d=(b[1]-a[1])/60000/(b[0]-a[0]);if(d>=0.5&&d<=15)return {m:d,real:true}}}return {m:ST.mt,real:false}}
 function etaOf(it){if(it.rem==null||it.rem>=999||it.rem<0)return null;var a=avgMin(it.cid);if(!a)return null;return {t:hm(Date.now()+it.rem*a.m*60000),real:a.real,m:a.m}}
 function snap(){HIST.push(JSON.stringify(ST));if(HIST.length>60)HIST.shift()}
@@ -624,7 +625,7 @@ function r3(){
  if(EV&&EV.sections)EV.sections.forEach(function(sec){if(!sec.bronze||sec.bronze==='unknown')extra.push('三位の決め方：'+sec.name)});
  var all=u.concat(extra);
  $('unk').innerHTML=all.length?all.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span><span class="tag">不明</span></div>'}).join(''):'<div class="sm">なし</div>';
- $('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('lt').value=ST.lt||'on';
+ $('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('ampm').checked=!!ST.ampm;$('lt').value=ST.lt||'on';
  $('saveinfo').textContent=storeOK?'結果は、この端末の中に自動で保存されています。':'この環境では保存できません。結果を書き出して控えてください。';
 }
 
@@ -842,6 +843,7 @@ window.T={
   if(rk!=null)markDone(c,Math.max(ST.done[c]||0,rk));
   ST.sel=null;LASTREC={sid:sec.id,no:no};save();render();
  },
+ setAmpm:function(v){snap();ST.ampm=!!v;save();render()},
  setMt:function(v){snap();ST.mt=parseFloat(v)||0;save();render()},
  setLt:function(v){snap();ST.lt=v==='off'?'off':'on';save();render()},
  histClr:function(){if(!confirm('蓄積した戦績をすべて消します。大会データと名簿は残ります。よろしいですか？'))return;rm('hist');r2();toast('戦績を消しました')},
