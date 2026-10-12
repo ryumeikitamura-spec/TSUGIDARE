@@ -191,6 +191,13 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .tile.t1 i{font-size:11px}
 .bt button{flex:1}
 .bt button.undo{flex:.8}
+
+/* v6 */
+.bt button.pri{background:color-mix(in srgb,var(--acc) 20%,var(--card));color:var(--acc);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 35%,transparent)}
+.rw .pl{font-size:16px;font-weight:700;padding:1px 8px 1px 7px;gap:5px}
+.rw .pl::before{width:9px;height:9px}
+.rw .rt b{font-size:17px;font-weight:800}
+.rw .rt{min-width:20px}
 </style>
 </head>
 <body>
@@ -202,7 +209,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   <div class="box" id="asbanner" style="display:none"></div>
   <div class="box" id="cfbox" style="display:none"></div>
   <div class="box" id="bigbox"><div id="big"></div></div>
-  <div class="box" id="lstbox"><div class="hd"><span>全員の出番（タップで上に表示）</span></div><div id="lst"></div></div>
+  <div class="box" id="lstbox"><div class="hd"><span>道場生の出番（タップで上に表示）</span></div><div id="lst"></div></div>
   <div class="box" id="lanbox"><div class="hd"><span>会場の進行（終了した試合数）</span></div><div id="lan"></div></div>
   <div class="box" id="pairbox">
     <div class="hd"><span>対戦する2人から進行を更新</span><button class="s" onclick="T.pairClear()">入れ直す</button></div>
