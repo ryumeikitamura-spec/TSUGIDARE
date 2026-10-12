@@ -142,7 +142,7 @@ header b{font-size:17px}
 .hero{padding:10px 14px 14px}
 .hero .hh{min-height:28px}
 .hero .nm{font-size:28px;margin:6px 0 0;line-height:1.2}
-.hero .vs{font-size:14px}
+.hero .vs{font-size:14px;color:var(--sub)}
 .tiles{margin-top:10px;gap:8px}
 .tile{padding:7px 10px;border-radius:12px}
 .tile i{font-size:10.5px;margin-bottom:0}
@@ -150,7 +150,12 @@ header b{font-size:17px}
 .tile u{display:none}
 .hero .w{margin-top:8px;font-size:12px}
 .bt{margin-top:10px;gap:8px}
-.bt button{height:50px;font-size:16px;border-radius:14px}
+.bt button{height:26px;font-size:14px;border-radius:9px;min-height:0;padding:0}
+.nrow{display:flex;align-items:center;gap:12px;margin:6px 0 0}
+.nrow .nm{flex:none;max-width:56%;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nrow .vs{flex:1;min-width:0;line-height:1.35}
+.nrow .vs>div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nrow .vs>div:last-child{font-size:13px}
 .rw{gap:10px;padding:7px 12px 7px 14px;margin:0 0 6px;border-radius:14px}
 .rw::before{width:4px}
 .rw .n{flex:1;min-width:0;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -369,11 +374,12 @@ function pstate(sec,pid){
 }
 function wins(sec,pid){var n=0,no=sec.leaf[pid];while(no!=null){var r=rs(sec,no);if(!r)break;if(winner(sec,no)!==pid)break;if(r.kind!=='wo')n++;no=sec.par[no]}return n}
 function isMine(p){if(p.mine!=null)return !!p.mine;var e=(EV&&EV.event)||{},t=p.team||'',al=(e.club_aliases||[]).concat(e.club?[e.club]:[]);return al.some(function(a){return a&&t.indexOf(a)>=0})}
+function oppTeam(sec,no,pid){var m=sec.mm[no],pa=slot(sec,m.a),pb=slot(sec,m.b),op=(pa===pid)?pb:pa;if(op==null)return '';var p=sec.pp[op];return p&&p.team?p.team:''}
 function oppText(sec,no,pid){
  var m=sec.mm[no],a=m.a,b=m.b,o=null;
  var pa=slot(sec,a),pb=slot(sec,b);
  var os=(pa===pid)?b:a,op=(pa===pid)?pb:pa;
- if(op!=null){var p=sec.pp[op];return p?(p.name+(p.team?'（'+p.team+'）':'')):''}
+ if(op!=null){var p=sec.pp[op];return p?p.name:''}
  if(os&&os.winner_of!=null){var rk=rank(sec,os.winner_of);return '第'+(rk!=null?rk:'?')+'試合の勝者'}
  if(os&&os.loser_of!=null){var rk2=rank(sec,os.loser_of);return '第'+(rk2!=null?rk2:'?')+'試合の敗者'}
  return '不戦（相手なし）';
@@ -387,7 +393,7 @@ function mineItems(){
    it.no=st.cur;it.rk=rank(sec,it.no);it.cid=cid;it.col=cc.color;
    it.rem=it.rk==null?999:it.rk-1-(ST.done[cid]||0);
    it.path=[];var n=sec.par[it.no];while(n!=null){var r=rank(sec,n);it.path.push(r!=null?r:'別');n=sec.par[n]}
-   it.opp=oppText(sec,it.no,p.id);
+   it.opp=oppText(sec,it.no,p.id);it.oppT=oppTeam(sec,it.no,p.id);
   }
   out.push(it)})});
  return out;
@@ -408,7 +414,7 @@ function cfRender(act){
  msgs.sort(function(a,b){return (b.u?1:0)-(a.u?1:0)});
  bx.style.display='';bx.innerHTML='<div class="hd"><span>'+(msgs[0].u?'出番が重なりそうです':'複数の部に出る選手')+'</span></div>'+msgs.map(function(m){return '<div class="'+(m.u?'ng':'sm')+'" style="margin-bottom:6px">'+m.t+'</div>'}).join('')}
 function cls(r){return r<=1?'r1':r<=4?'r2':'r3'}
-function remText(r){return r>=999?'試合順は会場で確認':r<0?'試合中の可能性':r===0?'次が出番':'あと'+r+'試合前'}
+function remText(r){return r>=999?'試合順は会場で確認':r<0?'試合中の可能性':r===0?'次が出番':'あと'+r+'試合'}
 function pill(cid){return '<span class="pl" style="--cc:'+court(cid).color+'">'+esc(clabel(cid))+'</span>'}
 function grade(){}
 
@@ -427,7 +433,7 @@ function r0(){
  var f=null;if(ST.sel)f=act.filter(function(i){return i.key===ST.sel})[0];if(!f)f=act[0];
  var b='';
  if(f){
-  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh">'+pill(f.cid)+'<span class="sm">'+esc(f.sec.name)+'・'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span><button class="s" onclick="T.undo()">戻す</button></div><div class="nm">'+esc(f.p.name)+'</div><div class="vs">'+(f.opp?'対 '+esc(f.opp):'対戦相手は前の試合しだい')+'</div><div class="tiles"><div class="tile '+cls(f.rem)+'"><i>いま</i><b>'+remText(f.rem)+'</b></div>'+etaHtml(f)+'</div><div class="w">'+(f.path.length?'勝てば次の試合　<b>'+f.path.join(', ')+'</b>':(f.st.third?'3位決定戦です':'この試合が決勝です'))+'</div><div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button></div></div>';
+  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh">'+pill(f.cid)+'<span class="sm">'+esc(f.sec.name)+'・'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span><button class="s" onclick="T.undo()">戻す</button></div><div class="nrow"><div class="nm">'+esc(f.p.name)+'</div><div class="vs"><div>'+(f.opp?'対 '+esc(f.opp):'相手は前の試合しだい')+'</div><div>'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile '+cls(f.rem)+'"><i>いま</i><b>'+remText(f.rem)+'</b></div>'+etaHtml(f)+'</div><div class="w">'+(f.path.length?'勝てば次の試合　<b>'+f.path.join(', ')+'</b>':(f.st.third?'3位決定戦です':'この試合が決勝です'))+'</div><div class="bt"><button class="pri" onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button></div></div>';
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='';act.forEach(function(it){
