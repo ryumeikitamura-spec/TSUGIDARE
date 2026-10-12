@@ -343,7 +343,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="row2"><button onclick="T.resetRes()">結果だけ消す</button><button onclick="T.resetAll()">全データを消す</button></div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.8.1</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.8.2</div>
 </div>
 
 <div class="pg" id="p6">
@@ -367,7 +367,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <label class="fl2">カードに「準決勝・ベスト8」などを出す範囲<select id="rdl" onchange="T.setRdl(this.value)"><option value="0">出さない</option><option value="1">決勝だけ</option><option value="2">ベスト4から（準決勝・決勝）</option><option value="3">ベスト8から</option><option value="4">ベスト16から</option><option value="5">ベスト32から</option><option value="9">すべての試合</option></select></label>
     <label class="fl2">ロスタイム<select id="lt" onchange="T.setLt(this.value)"><option value="on">あり（待てで時計が止まる）</option><option value="off">なし（流し・時間どおりに終わる）</option></select></label>
   </div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.8.1</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.8.2</div>
 </div>
 </div>
 
@@ -761,7 +761,7 @@ function copy(){var t=$('msg');t.select();try{if(navigator.clipboard&&navigator.
 
 /* ---------- 名簿 ---------- */
 /* ---------- 戦績 ---------- */
-function evKey(){return ST.ev||''}
+function evKey(){return ST.ev||(((EV&&EV.event&&EV.event.name)||'')+'|'+((EV&&EV.event&&EV.event.date)||''))}
 function isSample(){return !!(EV&&EV.event&&EV.event.name==='サンプル大会'&&EV.event.club==='サンプル道場')}
 function matchRecs(){
  var out=[];if(!EV||!EV.sections)return out;var e=EV.event||{};
@@ -772,7 +772,7 @@ function matchRecs(){
  return out;
 }
 function histCommit(){
- if(!EV||!ST.ev||isSample())return;var h=sg('hist')||[],key=evKey(),recs=matchRecs();
+ if(!EV||isSample())return;var h=sg('hist')||[],key=evKey(),recs=matchRecs();
  h=h.filter(function(x){return x.k!==key});if(recs.length)h.push({k:key,recs:recs});
  ss('hist',h);
 }
