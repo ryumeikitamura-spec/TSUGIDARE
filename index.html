@@ -226,16 +226,23 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 @media (prefers-color-scheme:dark){.rm{background:hsl(var(--h) var(--ds,52%) var(--dl,32%))}.rm.rmn{background:var(--in)}.rm.rm0{background:hsl(0 70% 52%)}}
 .rm.rmn{background:var(--in)}
 .rm.rm0{background:hsl(0 78% 46%)}
-/* v0.2.0 あと1〜5の色（今=あと1は同じ赤）と、行の枠着色 */
-.rm.ul1{background:#e8171c;color:#fff}
-.rm.ul2{background:#ff4f12;color:#fff}
-.rm.ul3{background:#ffd60a;color:#2b2400}
-.rm.ul4{background:#8fd63a;color:#162600}
-.rm.ul5{background:#34c759;color:#04210c}
-.rm.ul6{background:#2a4a5a;color:#cde3ee}
-.rw.ur1{--uc:#e8171c}.rw.ur2{--uc:#ff4f12}.rw.ur3{--uc:#ffd60a}.rw.ur4{--uc:#8fd63a}.rw.ur5{--uc:#34c759}
+/* あと◯の色（番号で設定）と、行の枠着色 */
+.rm.u0{background:var(--ub0);color:var(--ut0)}
+.rm.u1{background:var(--ub1);color:var(--ut1)}
+.rm.u2{background:var(--ub2);color:var(--ut2)}
+.rm.u3{background:var(--ub3);color:var(--ut3)}
+.rm.u4{background:var(--ub4);color:var(--ut4)}
+.rm.u5{background:var(--ub5);color:var(--ut5)}
+.rm.u6{background:var(--ub6);color:var(--ut6)}
+.rw.ur0{--uc:var(--ub0)}.rw.ur1{--uc:var(--ub1)}.rw.ur2{--uc:var(--ub2)}.rw.ur3{--uc:var(--ub3)}.rw.ur4{--uc:var(--ub4)}.rw.ur5{--uc:var(--ub5)}
 .rw.ur{background:color-mix(in srgb,var(--uc) 16%,var(--in));box-shadow:inset 0 0 0 1.5px var(--uc)}
 .rw.sel.ur{box-shadow:inset 0 0 0 1.5px var(--uc),inset 0 0 0 3.5px var(--cc)}
+.uc-pal{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:8px 0 12px}
+.uc-pal div{height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.uc-row{display:flex;align-items:center;gap:10px;padding:5px 0}
+.uc-row .ucl{flex:1;font-size:14px;font-weight:600}
+.uc-row .chip{min-width:62px}
+.uc-row select{width:76px;flex:none}
 </style>
 </head>
 <body>
@@ -312,6 +319,13 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   <div class="box"><div class="hd"><span>検算</span></div><div id="chk"></div></div>
   <div class="box"><div class="hd"><span>要確認（資料から分からない項目）</span></div><div id="unk"></div></div>
   <div class="box">
+    <div class="hd"><span>色の設定（試用）</span></div>
+    <div class="sm">見本の番号を、下の「今」「あと◯」ごとに選びます。決まったら色を固定にして、この設定は外します。</div>
+    <div class="uc-pal" id="ucpal"></div>
+    <div id="ucrows"></div>
+    <div class="row2"><button onclick="T.ucReset()">初期の色に戻す</button></div>
+  </div>
+  <div class="box">
     <div class="hd"><span>設定と保存</span></div>
     <div class="tg"><span>不戦の試合を番号から飛ばして数える</span><input type="checkbox" id="skip" onchange="T.setSkip(this.checked)"></div>
     <label class="fl2">試合時間（「なし」だと開始の目安の時刻は出しません）<select id="mt" onchange="T.setMt(this.value)"><option value="0">なし（時刻を出さない）</option><option value="1">1分</option><option value="1.5">1分30秒</option><option value="2">2分</option><option value="2.5">2分30秒</option><option value="3">3分</option><option value="3.5">3分30秒</option><option value="4">4分</option><option value="5">5分</option><option value="6">6分</option></select></label>
@@ -323,7 +337,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
     <div class="row2"><button onclick="T.resetRes()">結果だけ消す</button><button onclick="T.resetAll()">全データを消す</button></div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.2.1</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.3.0</div>
 </div>
 </div>
 
@@ -485,8 +499,17 @@ function cfRender(act){
  msgs.sort(function(a,b){return (b.u?1:0)-(a.u?1:0)});
  bx.style.display='';bx.innerHTML='<div class="hd"><span>'+(msgs[0].u?'出番が重なりそうです':'複数の部に出る選手')+'</span></div>'+msgs.map(function(m){return '<div class="'+(m.u?'ng':'sm')+'" style="margin-bottom:6px">'+m.t+'</div>'}).join('')}
 function hueOf(r){if(r>=999||r<0)return -1;if(r<0)r=0;return Math.round(Math.min(r,8)/8*130)}
+var PAL=[['#e8171c','#fff'],['#ff2d2d','#fff'],['#b3121a','#fff'],['#ff4f12','#fff'],['#ff7a14','#2b1100'],['#ff9a0a','#2b1500'],['#ffc80a','#2b2000'],['#ffd60a','#2b2400'],['#fff04a','#2b2800'],['#c6e23a','#1f2a00'],['#8fd63a','#162600'],['#5fcf4a','#06240c'],['#34c759','#04210c'],['#2fb84f','#04210c'],['#2c8f45','#fff'],['#2c5a36','#cfeedb'],['#1fb5a3','#04201c'],['#2a9d8f','#fff'],['#2a4a5a','#cde3ee'],['#3a6ea5','#fff'],['#6aa2ff','#06101f'],['#8b5cf6','#fff'],['#e0489a','#fff'],['#5b6575','#fff']];
+var UCD=[1,1,4,8,11,13,19],UCN=['今','あと1','あと2','あと3','あと4','あと5','あと6以降'],UCL=['今','あと1','あと2','あと3','あと4','あと5','あと6〜'];
+function ucGet(){var a=sg('uc'),o=[];for(var k=0;k<7;k++){var v=a&&parseInt(a[k],10);o.push(v>=1&&v<=PAL.length?v:UCD[k])}return o}
+function ucApply(){try{var a=ucGet(),st=document.documentElement.style;for(var k=0;k<7;k++){st.setProperty('--ub'+k,PAL[a[k]-1][0]);st.setProperty('--ut'+k,PAL[a[k]-1][1])}}catch(e){}}
+function ucRender(){var pe=$('ucpal'),re=$('ucrows');if(!pe||!re)return;var a=ucGet();
+ pe.innerHTML=PAL.map(function(c,i){return '<div style="background:'+c[0]+';color:'+c[1]+'">'+(i+1)+'</div>'}).join('');
+ re.innerHTML=a.map(function(v,k){var o='';for(var i=1;i<=PAL.length;i++)o+='<option value="'+i+'"'+(i===v?' selected':'')+'>'+i+'</option>';return '<div class="uc-row"><span class="ucl">'+UCN[k]+'</span><span class="chip" style="background:'+PAL[v-1][0]+';color:'+PAL[v-1][1]+'">'+UCL[k]+'</span><select onchange="T.ucSet('+k+',this.value)">'+o+'</select></div>'}).join('')}
+ucApply();
 function ulv(r){return (r>=0&&r<=5)?Math.max(r,1):0}
-function rmCls(r){return 'rm'+((r>=999||r<0)?' rmn':'')+(r===0?' rm0':'')+(ulv(r)?' ul'+ulv(r):(r>=6&&r<999?' ul6':''))}
+function ukey(r){return r===0?0:(r>=1&&r<=5)?r:(r>=6&&r<999)?6:-1}
+function rmCls(r){return 'rm'+((r>=999||r<0)?' rmn':'')+(r===0?' rm0':'')+(ukey(r)>=0?' u'+ukey(r):'')}
 function rmSty(r){var h=hueOf(r);if(h<0)return '';var l=r<=5?Math.round((56+Math.max(r,0)*3.5)*10)/10:80,dl=r<=5?Math.round((41-Math.max(r,0)*1.8)*10)/10:32,ds=r<=5?64:52;return '--h:'+h+';--l:'+l+'%;--dl:'+dl+'%;--ds:'+ds+'%'}
 function cls(r){return rmCls(r)}
 function remText(r){return r>=999?'試合順は会場で確認':r<0?'結果未入力':r===0?'今':'あと'+r+'試合'}
@@ -513,7 +536,7 @@ function r0(){
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='';act.forEach(function(it){
-  var uv=ulv(it.rem),ur=(uv&&ST.bd>=uv)?' ur ur'+uv:'';l+='<div class="rw'+(f===it?' sel':'')+ur+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'" style="'+rmSty(it.rem)+'">'+(it.rem>=999?'別':it.rem<0?'済?':it.rem===0?'今':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
+  var uv=ulv(it.rem),ur=(uv&&ST.bd>=uv)?' ur ur'+ukey(it.rem):'';l+='<div class="rw'+(f===it?' sel':'')+ur+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'" style="'+rmSty(it.rem)+'">'+(it.rem>=999?'別':it.rem<0?'済?':it.rem===0?'今':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
  $('lst').innerHTML=l||'<div class="sm">出番の選手はいません。</div>';
  var g='';COURTS.forEach(function(c){
   var d='',dn=ST.done[c.id]||0;
@@ -646,7 +669,7 @@ function r3(){
  if(EV&&EV.sections)EV.sections.forEach(function(sec){if(!sec.bronze||sec.bronze==='unknown')extra.push('三位の決め方：'+sec.name)});
  var all=u.concat(extra);
  $('unk').innerHTML=all.length?all.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span><span class="tag">不明</span></div>'}).join(''):'<div class="sm">なし</div>';
- $('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('ampm').checked=!!ST.ampm;$('lt').value=ST.lt||'on';$('bd').value=String(ST.bd);
+ $('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('ampm').checked=!!ST.ampm;$('lt').value=ST.lt||'on';$('bd').value=String(ST.bd);ucRender();
  $('saveinfo').textContent=storeOK?'結果は、この端末の中に自動で保存されています。':'この環境では保存できません。結果を書き出して控えてください。';
 }
 
@@ -864,6 +887,8 @@ window.T={
   if(rk!=null)markDone(c,Math.max(ST.done[c]||0,rk));
   ST.sel=null;LASTREC={sid:sec.id,no:no};save();render();
  },
+ ucSet:function(k,v){var a=ucGet();a[k]=parseInt(v,10)||UCD[k];ss('uc',a);ucApply();render()},
+ ucReset:function(){rm('uc');ucApply();render()},
  setBd:function(v){snap();ST.bd=Math.max(0,Math.min(5,parseInt(v,10)||0));save();render()},
  setAmpm:function(v){snap();ST.ampm=!!v;save();render()},
  setMt:function(v){snap();ST.mt=parseFloat(v)||0;save();render()},
