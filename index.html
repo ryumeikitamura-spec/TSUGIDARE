@@ -273,6 +273,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
 .dtw .dtv.ph{color:var(--sub)}
 .dtw:focus-within{box-shadow:0 0 0 2px var(--acc)}
 .fl2 .dti{position:absolute;left:0;top:0;width:100%;height:100%;margin:0;padding:0;opacity:0;border:0;font-size:16px}
+.asr select.psel{max-width:70px}
 .sheetnote{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 0;font-size:16px}
 </style>
 </head>
@@ -334,7 +335,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
   <div class="box" id="rulebox">
     <div class="hd"><span>大会のルール</span><span class="sm">この大会だけ</span></div>
     <div class="sm" id="rulenote" style="margin:0 0 6px"></div>
-    <div class="tg"><span>午前の部・午後の部に分ける（休憩をはさむ大会用）</span><input type="checkbox" id="spl" onchange="T.setSpl(this.checked)"></div>
+    <div class="tg"><span style="flex:1;min-width:0">何部まであるか<span class="sm" id="npnote" style="display:block;margin-top:2px"></span></span><span class="cs"><button id="npd" onclick="T.npN(-1)" aria-label="減らす">−</button><b id="npn" style="min-width:56px;text-align:center"></b><button id="npi" onclick="T.npN(1)" aria-label="増やす">＋</button></span></div>
     <div class="fl2">連戦になる所の扱い<div class="row2" style="margin-top:5px"><button id="mdI" onclick="T.asMode('interval')">インターバル</button><button id="mdS" onclick="T.asMode('insert')">1試合はさむ</button></div><div class="sm" id="mdnote" style="margin-top:8px;font-weight:400"></div></div>
     <label class="fl2">試合時間（「なし」だと開始の目安の時刻は出しません）<select id="mt" onchange="T.setMt(this.value)"><option value="0">なし（時刻を出さない）</option><option value="1">1分</option><option value="1.5">1分30秒</option><option value="2">2分</option><option value="2.5">2分30秒</option><option value="3">3分</option><option value="3.5">3分30秒</option><option value="4">4分</option><option value="5">5分</option><option value="6">6分</option></select></label>
     <label class="fl2">ロスタイム<select id="lt" onchange="T.setLt(this.value)"><option value="on">あり（待てで時計が止まる）</option><option value="off">なし（流し・時間どおりに終わる）</option></select></label>
@@ -346,7 +347,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
   <div class="box" id="asec">
     <div class="hd"><span>試合場の数</span></div>
     <div class="tg"><span class="sm">当日わかったら入れてください</span><span class="cs"><button onclick="T.asN(-1)" aria-label="減らす">−</button><b id="asn" style="min-width:56px;text-align:center"></b><button onclick="T.asN(1)" aria-label="増やす">＋</button></span></div>
-    <div class="sm" style="margin-top:8px">各部の試合場と順番は、下のリストで決めます。同じ試合場の中では、上の部から先に行われる想定です。</div>
+    <div class="sm" style="margin-top:8px">各区分の試合場と順番は、下のリストで決めます。同じ試合場の中では、上にあるものから先に行われる想定です。</div>
   </div>
   <div id="asl"></div>
   <details class="box"><summary class="hd"><span>検算・要確認（JSONを作った側の確認）</span></summary>
@@ -384,7 +385,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.4</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.5</div>
 </div>
 </div>
 
@@ -412,20 +413,22 @@ function rm(k){delete mem[k];try{localStorage.removeItem(KEY+k)}catch(e){}}
 
 var EV=sg('event'),RO=sg('roster'),ST=sg('state')||{},HIST=[],COURTS=[],BYK={},RYOFF=0;
 var ORIG={};
-function fixST(){ST.as=ST.as||{n:0,m:{}};ST.as.m=ST.as.m||{};ST.done=ST.done||{};ST.res=ST.res||{};ST.out=ST.out||{};ST.skip=!!ST.skip;ST.sel=ST.sel||null;ST.ev=ST.ev||null;ST.tl=ST.tl||{};ST.mt=ST.mt||0;ST.lt=ST.lt||'on';ST.cp=ST.cp==='pm'?'pm':'am';ST.dpk=ST.dpk||{};ST.as.p=ST.as.p||{};ST.mo=!!ST.mo}
+function fixST(){ST.as=ST.as||{n:0,m:{}};ST.as.m=ST.as.m||{};ST.done=ST.done||{};ST.res=ST.res||{};ST.out=ST.out||{};ST.skip=!!ST.skip;ST.sel=ST.sel||null;ST.ev=ST.ev||null;ST.tl=ST.tl||{};ST.mt=ST.mt||0;ST.lt=ST.lt||'on';ST.cp=partIn(ST.cp)||1;ST.dpk=ST.dpk||{};if(ST.dpk.am){ST.dpk[1]=ST.dpk.am;delete ST.dpk.am}if(ST.dpk.pm){ST.dpk[2]=ST.dpk.pm;delete ST.dpk.pm}ST.as.p=ST.as.p||{};ST.mo=!!ST.mo}
 fixST();
 function newId(){return 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function ensureId(){if(!EV)return;var e=EV.event||{};if(!EV._tid){EV._tid=ST.ev||newId();EV._src=EV._src||((e.name||'')+'|'+(e.date||''));ss('event',EV)}if(ST.ev!==EV._tid)ST.ev=EV._tid}
 function migrate(){
  if(ST.spl!=='on'&&ST.spl!=='off'){var v=sg('spl');if(v==='on'||v==='off')ST.spl=v}
+ if(ST.np==null&&(ST.spl==='on'||ST.spl==='off'))ST.np=ST.spl==='on'?2:1;
+ delete ST.spl;
  if(ST.nmd!=='court'&&ST.nmd!=='sec'){var n=sg('nmd');if(n==='court'||n==='sec')ST.nmd=n}
  if(typeof ST.bd==='number'){if(sg('bd')==null)ss('bd',ST.bd);delete ST.bd}
  ensureId();ss('state',ST);
 }
 function bdGet(){var v=sg('bd');return (typeof v==='number'&&v>=0&&v<=5)?v:3}
 function nameKey(n){return String(n||'').replace(/第?[0-9０-９]+回|令和[0-9０-９]+年度?|[0-9０-９]{4}年度?|[\s\u3000]/g,'')}
-function RULES(){return {spl:ST.spl||'',skip:!!ST.skip,mt:ST.mt||0,lt:ST.lt==='off'?'off':'on',nmd:ST.nmd==='court'?'court':'sec',mode:MODE()}}
-function applyRules(r){ST.spl=(r.spl==='on'||r.spl==='off')?r.spl:undefined;ST.skip=!!r.skip;ST.mt=r.mt||0;ST.lt=r.lt==='off'?'off':'on';ST.nmd=r.nmd==='court'?'court':'sec';ST.as=ST.as||{n:0,m:{}};ST.as.mode=r.mode==='insert'?'insert':'interval';SPLC=null}
+function RULES(){return {np:(typeof ST.np==='number'&&ST.np>=1)?ST.np:undefined,skip:!!ST.skip,mt:ST.mt||0,lt:ST.lt==='off'?'off':'on',nmd:ST.nmd==='court'?'court':'sec',mode:MODE()}}
+function applyRules(r){var rn=parseInt(r.np,10);if(rn>=1)ST.np=Math.min(6,rn);else if(r.spl==='on')ST.np=2;else if(r.spl==='off')ST.np=1;else delete ST.np;delete ST.spl;ST.skip=!!r.skip;ST.mt=r.mt||0;ST.lt=r.lt==='off'?'off':'on';ST.nmd=r.nmd==='court'?'court':'sec';ST.as=ST.as||{n:0,m:{}};ST.as.mode=r.mode==='insert'?'insert':'interval';NPC=null}
 function pickRules(d){var k=nameKey(d.event&&d.event.name),h=sg('rhist')||{};if(k&&h[k])return {r:h[k],src:'hist'};var df=sg('rdef');if(df)return {r:df,src:'def'};return null}
 function rulesCommit(){if(!EV||isSample())return;var k=nameKey(EV.event&&EV.event.name);if(!k)return;var h=sg('rhist')||{};h[k]=RULES();ss('rhist',h)}
 var RN='';
@@ -451,13 +454,15 @@ var SEQ={};
 function MODE(){return (ST.as&&ST.as.mode)==='insert'?'insert':'interval'}
 function conf(prev,m){return ['a','b'].some(function(k){var x=m[k];return x&&(x.winner_of===prev.no||x.loser_of===prev.no)})}
 function nmatch(sec){return (sec.matches||[]).filter(function(m){return !m.later}).length}
-var SPLC=null;
-function splitOn(){if(SPLC!==null)return SPLC;var v=ST.spl,r;if(v==='on')r=true;else if(v==='off')r=false;else r=!!(EV&&EV.sections&&EV.sections.some(function(x){return x.part==='pm'||x.part==='午後'||(ST.as&&ST.as.p&&ST.as.p[x.id]==='pm')}));SPLC=r;return r}
-function secPart(sec){if(!splitOn())return 'am';var a=ST.as&&ST.as.p&&ST.as.p[sec.id];if(a==='pm'||a==='am')return a;return (sec.part==='pm'||sec.part==='午後')?'pm':'am'}
+var NPC=null;
+function partIn(v){if(typeof v==='number')return v>=1?Math.floor(v):0;v=String(v==null?'':v);if(v==='pm'||v==='午後')return 2;if(v==='am'||v==='午前')return 1;var n=parseInt(v,10);return n>=1?n:0}
+function npOf(){if(NPC!==null)return NPC;var v=ST.np,r;if(typeof v==='number'&&v>=1)r=Math.min(6,Math.floor(v));else if(ST.spl==='off')r=1;else{r=1;(EV&&EV.sections||[]).forEach(function(x){r=Math.max(r,partIn(x.part),partIn(ST.as&&ST.as.p&&ST.as.p[x.id]))});if(ST.spl==='on')r=Math.max(2,r);r=Math.min(6,r)}NPC=r;return r}
+function splitOn(){return npOf()>1}
+function secPart(sec){var n=npOf();if(n<2)return 1;var a=partIn(ST.as&&ST.as.p&&ST.as.p[sec.id]);if(a<1)a=partIn(sec.part);if(a<1)a=1;return Math.min(a,n)}
 function hasPM(){return splitOn()}
-function curPart(){return (splitOn()&&ST.cp==='pm')?'pm':'am'}
-function doSwitch(p){p=p==='pm'?'pm':'am';if(p===curPart())return false;ST.dpk=ST.dpk||{};ST.dpk[curPart()]={done:ST.done,tl:ST.tl};var n=ST.dpk[p]||{};ST.done=n.done||{};ST.tl=n.tl||{};ST.cp=p;ST.sel=null;LSTX=false;return true}
-function autoPart(){if(!splitOn()||ST.cp==='pm'||ST.mo||!EV||!EV.sections)return false;var all=mineItems().filter(function(it){return !it.mk}),a=all.some(function(it){return secPart(it.sec)==='am'&&it.st.cur!=null}),p=all.some(function(it){return secPart(it.sec)==='pm'&&it.st.cur!=null});if(!a&&p){doSwitch('pm');save();index();return true}return false}
+function curPart(){return splitOn()?Math.min(npOf(),partIn(ST.cp)||1):1}
+function doSwitch(p){p=Math.max(1,Math.min(npOf(),parseInt(p,10)||1));if(p===curPart())return false;ST.dpk=ST.dpk||{};ST.dpk[curPart()]={done:ST.done,tl:ST.tl};var n=ST.dpk[p]||{};ST.done=n.done||{};ST.tl=n.tl||{};ST.cp=p;ST.sel=null;LSTX=false;return true}
+function autoPart(){var np=npOf();if(np<2||ST.mo||!EV||!EV.sections)return false;var cp=curPart(),act={};mineItems().forEach(function(it){if(!it.mk&&it.st.cur!=null)act[secPart(it.sec)]=1});if(act[cp])return false;for(var q=cp+1;q<=np;q++)if(act[q]){doSwitch(q);save();index();return true}return false}
 function hlGet(){return sg('hl')!=='off'}
 function nplGet(){return sg('npl')!=='off'}
 function nmdGet(){return ST.nmd==='court'?'court':'sec'}
@@ -475,7 +480,7 @@ function applyAssign(){
  });
  Object.keys(grp).forEach(function(c){var off=0;grp[c].sort(function(x,y){return (as.m[x.id].o||0)-(as.m[y.id].o||0)}).forEach(function(sec){sec.order_offset=off;off+=nmatch(sec)})});
 }
-function index(){SPLC=null;
+function index(){NPC=null;
  COURTS=[];if(!EV||!EV.sections)return;
  applyAssign();
  var cs={};
@@ -499,7 +504,7 @@ function index(){SPLC=null;
     if(last&&last.s===list[i]&&conf(last.m,m)){var j=i+1;while(j<list.length&&!q[j].length)j++;if(j<list.length)seq.push({s:list[j],m:q[j].shift()})}
     q[i].shift();seq.push({s:list[i],m:m});
    }
-   SEQ[c]=seq;var c0=c.split('|');if(cs[c0[0]]&&c0[1]===curPart())cs[c0[0]].max=Math.max(1,seq.length);
+   SEQ[c]=seq;var c0=c.split('|');if(cs[c0[0]]&&+c0[1]===curPart())cs[c0[0]].max=Math.max(1,seq.length);
   });
  }
  COURTS=Object.keys(cs).sort(function(a,b){if(a==='未定')return 1;if(b==='未定')return -1;var x=parseFloat(a),y=parseFloat(b);return (isNaN(x)||isNaN(y))?a.localeCompare(b):x-y}).map(function(c,i){cs[c].color=PAL[i%PAL.length];cs[c].max=Math.max(1,cs[c].max);return cs[c]});
@@ -691,8 +696,11 @@ function r0(){
  var own=allItems.filter(function(it){return !it.mk}),fin=!own.some(function(it){return it.st.cur!=null})&&own.some(function(it){return !it.st.none}),cmb=$('cmbox');cmb.style.display=fin?'':'none';
  if(fin){var sg2=JSON.stringify(ST.res)+'|'+$('onlyMine').checked;if(sg2!==CMSIG){CMSIG=sg2;gen()}}else CMSIG='';
  var pb=$('ptbox');
- if(hp){var oth=cp==='am'?'pm':'am',oact=allItems.filter(function(it){return secPart(it.sec)===oth&&it.st.cur!=null}).length,ph='<div class="hd"><span>進行中の部</span></div><div>'+chp('午前の部',cp==='am',"T.part('am')")+chp('午後の部',cp==='pm',"T.part('pm')")+'</div>';
-  if(!act.length&&oact)ph+='<div class="sm" style="margin-top:4px">'+(cp==='am'?'午前':'午後')+'の部は、自道場の出番が終わりました。</div><div class="row2"><button class="pri" onclick="T.part(\''+oth+'\')">'+(oth==='pm'?'午後':'午前')+'の部を始める</button></div>';
+ if(hp){var npv=npOf(),hasA=function(q){return allItems.some(function(it){return secPart(it.sec)===q&&it.st.cur!=null})},ph='<div class="hd"><span>いま何部？</span></div><div>',q;
+  for(q=1;q<=npv;q++)ph+=chp(q+'部',cp===q,"T.part("+q+")");
+  ph+='</div>';
+  if(!act.length){var nx=0;for(q=cp+1;q<=npv&&!nx;q++)if(hasA(q))nx=q;for(q=1;q<cp&&!nx;q++)if(hasA(q))nx=q;
+   if(nx)ph+='<div class="sm" style="margin-top:4px">'+cp+'部は、自道場の出番が終わりました。</div><div class="row2"><button class="pri" onclick="T.part('+nx+')">'+nx+'部を始める</button></div>'}
   pb.style.display='';pb.innerHTML=ph}else pb.style.display='none';
  var f=null;if(ST.sel)f=act.filter(function(i){return i.key===ST.sel})[0];if(!f)f=act[0];
  var b='',sr=!!(f&&f.ri&&rdlGet()>0&&f.ri.d<=rdlGet()-1);
@@ -843,7 +851,7 @@ function r3(){
  if(EV&&EV.sections)EV.sections.forEach(function(sec){if(!sec.bronze||sec.bronze==='unknown')extra.push('三位の決め方：'+sec.name)});
  var all=u.concat(extra);
  $('unk').innerHTML=all.length?all.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span><span class="tag">不明</span></div>'}).join(''):'<div class="sm">なし</div>';
- $('spl').checked=splitOn();$('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('rdl').value=String(rdlGet());$('lcf').value=String(lcfGet());$('hlg').checked=hlGet();$('npl').checked=nplGet();$('nmd').value=nmdGet();$('lt').value=ST.lt||'on';$('bd').value=String(bdGet());$('rulenote').textContent=RN;ucRender();
+ var npv=npOf();$('npn').textContent=npv+'部';$('npd').disabled=npv<=1;$('npi').disabled=npv>=6;$('npnote').textContent=npv>1?'区分の何部かは、下のリストで選びます。':'午前・午後など、時間を分けて行うときに増やします。';$('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('rdl').value=String(rdlGet());$('lcf').value=String(lcfGet());$('hlg').checked=hlGet();$('npl').checked=nplGet();$('nmd').value=nmdGet();$('lt').value=ST.lt||'on';$('bd').value=String(bdGet());$('rulenote').textContent=RN;ucRender();
  $('saveinfo').textContent=storeOK?'結果は、この端末の中に自動で保存されています。':'この環境では保存できません。結果を書き出して控えてください。';
 }
 
@@ -907,25 +915,26 @@ function r4(){
  var md=MODE();$('mdI').className=md==='interval'?'pri':'';$('mdS').className=md==='insert'?'pri':'';
  $('mdnote').textContent=md==='insert'?'準決勝と決勝（3位決定戦）などが連戦になるとき、同じ試合場の次の部の1試合目を先に行います。会場内の順番がその分ずれます。最後の部は連戦のままです。':'試合の順番は番号どおりに数えます。連戦になる所は、時間をあけて行う前提です。';
  var groups=['未定'];for(var i=1;i<=n;i++)groups.push(String(i));
- var sp=splitOn(),parts=sp?['am','pm']:['am'],h='';
+ var sp=splitOn(),U=sp?'区分':'部',npv=npOf(),parts=[],h='';for(var q=1;q<=npv;q++)parts.push(q);
  parts.forEach(function(pt){
   var inP=EV.sections.filter(function(x){return secPart(x)===pt});
-  if(sp){var tm=0;inP.forEach(function(x){tm+=nmatch(x)});h+='<div class="pth">'+(pt==='am'?'午前の部':'午後の部')+'<span class="sm">　'+inP.length+'部・'+tm+'試合</span></div>'}
+  if(sp){var tm=0;inP.forEach(function(x){tm+=nmatch(x)});h+='<div class="pth">'+pt+'部<span class="sm">　'+tm+'試合</span></div>'}
+  var popt='';for(var q2=1;q2<=npv;q2++)popt+='<option value="'+q2+'"'+(q2===pt?' selected':'')+'>'+q2+'部</option>';
   groups.forEach(function(c){
    var ss=inP.filter(function(x){return String(x.court)===c});
    if(c==='未定'&&!ss.length)return;
    if(c!=='未定')ss.sort(function(x,y){return (x.order_offset||0)-(y.order_offset||0)});
    var tot=0;ss.forEach(function(x){tot+=nmatch(x)});
-   h+='<div class="box asg" data-c="'+esc(c)+'" data-pt="'+pt+'"><div class="hd"><span>'+(c==='未定'?'未定の部':esc(clabel(c)))+'</span><span class="sm">'+(c==='未定'?ss.length+'部':ss.length+'部・'+tot+'試合')+'</span></div><div class="asrows" style="min-height:'+(ss.length?0:36)+'px">';
-   if(!ss.length)h+='<div class="sm asnone">ここへ部をドラッグできます。</div>';
+   h+='<div class="box asg" data-c="'+esc(c)+'" data-pt="'+pt+'"><div class="hd"><span>'+(c==='未定'?'未定の'+U:esc(clabel(c)))+'</span><span class="sm">'+(c==='未定'?ss.length+U:ss.length+U+'・'+tot+'試合')+'</span></div><div class="asrows" style="min-height:'+(ss.length?0:36)+'px">';
+   if(!ss.length)h+='<div class="sm asnone">ここへ'+U+'をドラッグできます。</div>';
    ss.forEach(function(x,k){
     var mc=mineCount(x),opt='<option value="未定"'+(c==='未定'?' selected':'')+'>未定</option>';
     for(var j=1;j<=n;j++)opt+='<option value="'+j+'"'+(String(j)===c?' selected':'')+'>'+j+'試合場</option>';
-    h+='<div class="asr" data-id="'+esc(x.id)+'">'+(c!=='未定'||n>0?'<span class="hdl" data-id="'+esc(x.id)+'" role="button" aria-label="つかんで並べ替え">≡</span>':'')+'<span class="nm">'+esc(x.name)+'<br><span class="sm">'+(x.players||[]).length+'名・'+nmatch(x)+'試合'+(mc?'・自道場'+mc+'名':'')+'</span></span>'+(sp?'<button class="s" onclick="T.asPart(\''+esc(x.id)+'\')" aria-label="部を移す">'+(pt==='am'?'午後へ':'午前へ')+'</button>':'')+'<select onchange="T.asMove(\''+esc(x.id)+'\',this.value)" aria-label="試合場">'+opt+'</select></div>'});
+    h+='<div class="asr" data-id="'+esc(x.id)+'">'+(c!=='未定'||n>0?'<span class="hdl" data-id="'+esc(x.id)+'" role="button" aria-label="つかんで並べ替え">≡</span>':'')+'<span class="nm">'+esc(x.name)+'<br><span class="sm">'+(x.players||[]).length+'名・'+nmatch(x)+'試合'+(mc?'・自道場'+mc+'名':'')+'</span></span>'+(sp?'<select class="psel" onchange="T.asPart(\''+esc(x.id)+'\',this.value)" aria-label="何部">'+popt+'</select>':'')+'<select onchange="T.asMove(\''+esc(x.id)+'\',this.value)" aria-label="試合場">'+opt+'</select></div>'});
    h+='</div></div>'})});
  $('asl').innerHTML=h;
 }
-function asRenumber(c){var as=ST.as,l=EV.sections.filter(function(x){return as.m[x.id]&&as.m[x.id].c===c}).sort(function(x,y){return (secPart(x)==='pm'?1:0)-(secPart(y)==='pm'?1:0)||as.m[x.id].o-as.m[y.id].o});l.forEach(function(x,k){as.m[x.id].o=k})}
+function asRenumber(c){var as=ST.as,l=EV.sections.filter(function(x){return as.m[x.id]&&as.m[x.id].c===c}).sort(function(x,y){return secPart(x)-secPart(y)||as.m[x.id].o-as.m[y.id].o});l.forEach(function(x,k){as.m[x.id].o=k})}
 function asCommit(){save();index();pairClear();render()}
 function asMaterialize(){var as=ST.as;EV.sections.forEach(function(x){if(!as.m[x.id]&&String(x.court)!=='未定')as.m[x.id]={c:String(x.court),o:x.order_offset||0}});var cs={};Object.keys(as.m).forEach(function(k){cs[as.m[k].c]=1});Object.keys(cs).forEach(asRenumber)}
 var DR=null;
@@ -968,7 +977,7 @@ function setEv(d){
  var key=((d.event&&d.event.name)||'')+'|'+((d.event&&d.event.date)||''),same=!!(EV&&EV._tid&&EV._src===key&&ST.ev===EV._tid),tid=same?EV._tid:newId();
  ORIG={};d._tid=tid;d._src=key;EV=d;ss('event',EV);RN='';
  if(!same){HIST=[];ST={};fixST();ST.ev=tid;var pk=pickRules(d);if(pk){applyRules(pk.r);RN=pk.src==='hist'?'前回の同じ大会の設定を入れました。':'初期値の設定を入れました。'}}
- SPLC=null;save();index();pairClear();render();
+ NPC=null;save();index();pairClear();render();
 }
 function readFile(inp,cb){var f=inp.files&&inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{cb(JSON.parse(r.result))}catch(e){toast('読み込めませんでした。JSONの形式を確認してください')}inp.value=''};r.readAsText(f)}
 
@@ -997,7 +1006,7 @@ function download(name,obj){try{var b=new Blob([JSON.stringify(obj,null,1)],{typ
 function hdHtml(ds){var m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(ds||'');if(!m)return '';var d=new Date(+m[1],+m[2]-1,+m[3]);if(isNaN(d.getTime()))return '';return '<span class="y">'+d.getFullYear()+'</span><span class="d">'+('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2)+'('+'日月火水木金土'.charAt(d.getDay())+')</span>'}
 function fmtDate(ds){if(!ds)return '';var d=new Date(ds+'T00:00:00');if(isNaN(d.getTime()))return ds;return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+'（'+'日月火水木金土'.charAt(d.getDay())+'）'}
 function render(){
- SPLC=null;
+ NPC=null;
  var he=EV&&EV.event,hl=hlGet();$('hlogo').style.display=hl?'':'none';$('hname').className=hl?'':'lft';$('hname').textContent=he?(he.name||''):'';$('hdate').innerHTML=hdHtml(he&&he.date);
  r0();r2();r3();r4();tbl();
 }
@@ -1038,12 +1047,13 @@ window.T={
  recOpen:function(){if(!LASTREC)return;var l=LASTREC;LASTREC=null;shOpen(l.sid,l.no);r0()},
  recX:function(){LASTREC=null;r0()},
  asMode:function(m){if(!EV)return;snap();ST.as.mode=m==='insert'?'insert':'interval';asCommit()},
- asDrop:function(id,c,idx,pt){if(!EV)return;snap();asMaterialize();var as=ST.as,old=as.m[id]&&as.m[id].c;if(pt&&splitOn()){as.p=as.p||{};as.p[id]=pt}if(c==='未定'){as.m[id]={c:'未定',o:0}}else{var dp=secPart(EV.sections.filter(function(x){return x.id===id})[0]||{}),l=EV.sections.filter(function(x){return x.id!==id&&as.m[x.id]&&as.m[x.id].c===c&&secPart(x)===dp}).sort(function(x,y){return as.m[x.id].o-as.m[y.id].o}).map(function(x){return x.id});l.splice(Math.max(0,Math.min(idx,l.length)),0,id);l.forEach(function(k,i){as.m[k]={c:c,o:i}});asRenumber(c)}if(old&&old!==c)asRenumber(old);asCommit()},
- asPart:function(id){if(!EV)return;var sec=EV.sections.filter(function(x){return String(x.id)===String(id)})[0];if(!sec)return;snap();asMaterialize();var as=ST.as;as.p=as.p||{};var np=secPart(sec)==='pm'?'am':'pm';as.p[sec.id]=np;var a=as.m[sec.id];
+ asDrop:function(id,c,idx,pt){if(!EV)return;snap();asMaterialize();var as=ST.as,old=as.m[id]&&as.m[id].c;pt=parseInt(pt,10)||0;if(pt&&splitOn()){as.p=as.p||{};as.p[id]=Math.min(pt,npOf())}if(c==='未定'){as.m[id]={c:'未定',o:0}}else{var dp=secPart(EV.sections.filter(function(x){return x.id===id})[0]||{}),l=EV.sections.filter(function(x){return x.id!==id&&as.m[x.id]&&as.m[x.id].c===c&&secPart(x)===dp}).sort(function(x,y){return as.m[x.id].o-as.m[y.id].o}).map(function(x){return x.id});l.splice(Math.max(0,Math.min(idx,l.length)),0,id);l.forEach(function(k,i){as.m[k]={c:c,o:i}});asRenumber(c)}if(old&&old!==c)asRenumber(old);asCommit()},
+ asPart:function(id,p){if(!EV)return;var sec=EV.sections.filter(function(x){return String(x.id)===String(id)})[0];if(!sec)return;p=Math.max(1,Math.min(npOf(),parseInt(p,10)||1));if(p===secPart(sec))return;snap();asMaterialize();var as=ST.as;as.p=as.p||{};as.p[sec.id]=p;var a=as.m[sec.id];
   if(a&&a.c!=='未定'){a.o=1e6;asRenumber(a.c)}
-  asCommit();toast(sec.name+'を'+(np==='pm'?'午後':'午前')+'の部へ移しました')},
- part:function(p){p=p==='pm'?'pm':'am';if(p===curPart())return;snap();doSwitch(p);ST.mo=true;save();index();pairClear();render()},
- setSpl:function(v){snap();if(!v&&ST.cp==='pm')doSwitch('am');ST.spl=v?'on':'off';SPLC=null;ST.mo=false;ST.sel=null;save();index();pairClear();render()},
+  asCommit();toast(sec.name+'を'+p+'部へ移しました')},
+ part:function(p){p=Math.max(1,Math.min(npOf(),parseInt(p,10)||1));if(p===curPart())return;snap();doSwitch(p);ST.mo=true;save();index();pairClear();render()},
+ setNp:function(v){v=Math.max(1,Math.min(6,parseInt(v,10)||1));if(v===npOf()&&ST.np===v)return;snap();if(v<npOf()&&curPart()>v)doSwitch(v);ST.np=v;delete ST.spl;NPC=null;ST.mo=false;ST.sel=null;save();index();pairClear();render()},
+ npN:function(d){T.setNp(npOf()+d)},
  asMove:function(id,c){if(!EV)return;snap();asMaterialize();var as=ST.as,old=as.m[id]&&as.m[id].c;if(c==='未定'){as.m[id]={c:'未定',o:0}}else{var mx=-1;EV.sections.forEach(function(x){var a=as.m[x.id];if(x.id!==id&&a&&a.c===c)mx=Math.max(mx,a.o)});as.m[id]={c:c,o:mx+1}}asRenumber(c);if(old&&old!==c)asRenumber(old);asCommit()},
  asUp:function(id,d){if(!EV)return;snap();var as=ST.as,c=as.m[id]&&as.m[id].c;if(!c)return;asRenumber(c);var l=EV.sections.filter(function(x){return as.m[x.id]&&as.m[x.id].c===c}).sort(function(x,y){return as.m[x.id].o-as.m[y.id].o}),k=l.map(function(x){return x.id}).indexOf(id),j=k+d;if(j<0||j>=l.length)return;var t=as.m[l[k].id].o;as.m[l[k].id].o=as.m[l[j].id].o;as.m[l[j].id].o=t;asCommit()},
  undo:function(){if(!HIST.length){toast('戻せる操作がありません');return}ST=JSON.parse(HIST.pop());fixST();save();render()},
@@ -1094,7 +1104,7 @@ window.T={
   if(Array.isArray(d.hist)&&d.hist.length)ss('hist',d.hist);
   if(d.marks)ss('marks',d.marks);if(d.rdef)ss('rdef',d.rdef);if(d.rhist)ss('rhist',d.rhist);
   if(d.appset){Object.keys(d.appset).forEach(function(k){if(d.appset[k]!=null)ss(k,d.appset[k])});ucApply()}
-  ST=d.state;fixST();SPLC=null;migrate();save();index();pairClear();render();toast('復元しました')})},
+  ST=d.state;fixST();NPC=null;migrate();save();index();pairClear();render();toast('復元しました')})},
  resetRes:function(){if(!confirm('勝ち負けと試合数の記録を消します。大会データと名簿は残ります。よろしいですか？'))return;snap();var ev=ST.ev,as=ST.as,rl=RULES();ST={};fixST();ST.ev=ev;ST.as=as;applyRules(rl);save();index();render()},
  resetAll:function(){if(!confirm('大会データ・名簿・結果をすべてこの端末から消します（蓄積した戦績は残ります）。よろしいですか？'))return;EV=null;RO=null;ST={};fixST();HIST=[];rm('event');rm('roster');rm('state');index();pairClear();render()}
 };
