@@ -218,6 +218,14 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .rm.rmn{background:var(--in);color:var(--sub)}
 .rm.rm0{background:hsl(0 78% 46%);color:#fff}
 @media (prefers-color-scheme:dark){.rm{background:hsl(var(--h) 52% 32%);color:hsl(var(--h) 90% 88%)}.rm.rmn{background:var(--in);color:var(--sub)}.rm.rm0{background:hsl(0 70% 52%);color:#fff}}
+
+/* v10 近い試合ほど濃く、行の左の帯は無し */
+.rm{background:hsl(var(--h) 85% var(--l,80%))}
+.rw::before{display:none}
+.rw{padding-left:12px}
+@media (prefers-color-scheme:dark){.rm{background:hsl(var(--h) var(--ds,52%) var(--dl,32%))}.rm.rmn{background:var(--in)}.rm.rm0{background:hsl(0 70% 52%)}}
+.rm.rmn{background:var(--in)}
+.rm.rm0{background:hsl(0 78% 46%)}
 </style>
 </head>
 <body>
@@ -467,7 +475,7 @@ function cfRender(act){
  bx.style.display='';bx.innerHTML='<div class="hd"><span>'+(msgs[0].u?'出番が重なりそうです':'複数の部に出る選手')+'</span></div>'+msgs.map(function(m){return '<div class="'+(m.u?'ng':'sm')+'" style="margin-bottom:6px">'+m.t+'</div>'}).join('')}
 function hueOf(r){if(r>=999||r<0)return -1;if(r<0)r=0;return Math.round(Math.min(r,8)/8*130)}
 function rmCls(r){return 'rm'+((r>=999||r<0)?' rmn':'')+(r===0?' rm0':'')}
-function rmSty(r){var h=hueOf(r);return h<0?'':'--h:'+h}
+function rmSty(r){var h=hueOf(r);if(h<0)return '';var l=r<=5?Math.round((56+Math.max(r,0)*3.5)*10)/10:80,dl=r<=5?Math.round((41-Math.max(r,0)*1.8)*10)/10:32,ds=r<=5?64:52;return '--h:'+h+';--l:'+l+'%;--dl:'+dl+'%;--ds:'+ds+'%'}
 function cls(r){return rmCls(r)}
 function remText(r){return r>=999?'試合順は会場で確認':r<0?'結果未入力':r===0?'今':'あと'+r+'試合'}
 function pill(cid){return '<span class="pl" style="--cc:'+court(cid).color+'">'+esc(clabel(cid))+'</span>'}
