@@ -212,6 +212,21 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 #hsub{text-align:right;line-height:1.25;white-space:normal;max-width:60%}
 #hsub .h1{display:block;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #hsub .h2{display:block;font-size:11px;font-weight:500}
+
+/* v8 一覧: 左=あと何試合の色、右=試合場の色 */
+.rw.rr{padding:0;gap:0;align-items:stretch;overflow:hidden;min-height:50px;background:var(--in)}
+.rw.rr::before{display:none}
+.rw.rr .l{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:6px 10px 6px 10px;background:hsl(var(--h,0) 85% 84%);color:hsl(var(--h,0) 90% 13%)}
+.rw.rr .chip{background:rgba(255,255,255,.6);color:inherit;min-width:48px;font-size:12.5px}
+.rw.rr .n{flex:1;min-width:0;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rw.rr .c{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:112px;padding:6px 12px;background:var(--cc);color:#fff;font-size:16px;font-weight:700}
+.rw.rr .c b{font-size:17px;font-weight:800}
+.rw.rr0 .l{background:hsl(0 78% 48%);color:#fff}
+.rw.rr0 .chip{background:rgba(255,255,255,.25)}
+.rw.rrn .l{background:var(--in);color:var(--sub)}
+.rw.rrn .chip{background:rgba(0,0,0,.07)}
+.rw.rr.sel{box-shadow:0 0 0 2.5px var(--tx)}
+@media (prefers-color-scheme:dark){.rw.rr .l{background:hsl(var(--h,0) 52% 30%);color:hsl(var(--h,0) 90% 88%)}.rw.rr .chip{background:rgba(255,255,255,.14)}.rw.rr0 .l{background:hsl(0 70% 48%);color:#fff}.rw.rrn .l{background:var(--in);color:var(--sub)}.rw.rrn .chip{background:rgba(255,255,255,.08)}}
 </style>
 </head>
 <body>
@@ -485,7 +500,7 @@ function r0(){
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='';act.forEach(function(it){
-  l+='<div class="rw'+(f===it?' sel':'')+'" style="--cc:'+it.col+'" onclick="T.pick(\''+esc(it.key)+'\')"><span class="chip '+cls(it.rem)+'" style="'+rmSty(it.rem)+'">'+(it.rem>=999?'別':it.rem<0?'済?':it.rem===0?'今':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span>'+pill(it.cid)+'<span class="rt"><b>'+(it.rk!=null?it.rk:'別')+'</b></span></div>'});
+  l+='<div class="rw rr'+(it.rem===0?' rr0':(it.rem<0||it.rem>=999)?' rrn':'')+(f===it?' sel':'')+'" style="--cc:'+it.col+';'+rmSty(it.rem)+'" onclick="T.pick(\''+esc(it.key)+'\')"><div class="l"><span class="chip">'+(it.rem>=999?'別':it.rem<0?'済?':it.rem===0?'今':'あと'+it.rem)+'</span><span class="n">'+esc(it.p.name)+'</span></div><div class="c"><span>'+esc(clabel(it.cid))+'</span><b>'+(it.rk!=null?it.rk:'別')+'</b></div></div>'});
  $('lst').innerHTML=l||'<div class="sm">出番の選手はいません。</div>';
  var g='';COURTS.forEach(function(c){
   var d='',dn=ST.done[c.id]||0;
