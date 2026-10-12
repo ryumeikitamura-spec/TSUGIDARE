@@ -212,6 +212,12 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 #hsub{text-align:right;line-height:1.25;white-space:normal;max-width:60%}
 #hsub .h1{display:block;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #hsub .h2{display:block;font-size:11px;font-weight:500}
+
+/* v9 ラベルを少し濃く */
+.rm{background:hsl(var(--h) 85% 80%);color:hsl(var(--h) 90% 18%)}
+.rm.rmn{background:var(--in);color:var(--sub)}
+.rm.rm0{background:hsl(0 78% 46%);color:#fff}
+@media (prefers-color-scheme:dark){.rm{background:hsl(var(--h) 52% 32%);color:hsl(var(--h) 90% 88%)}.rm.rmn{background:var(--in);color:var(--sub)}.rm.rm0{background:hsl(0 70% 52%);color:#fff}}
 </style>
 </head>
 <body>
