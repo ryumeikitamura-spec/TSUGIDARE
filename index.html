@@ -228,11 +228,12 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .rm.rm0{background:hsl(0 78% 46%)}
 /* v0.2.0 あと1〜5の色（今=あと1は同じ赤）と、行の枠着色 */
 .rm.ul1{background:#e8171c;color:#fff}
-.rm.ul2{background:#ff3d1a;color:#fff}
-.rm.ul3{background:#ff6a10;color:#fff}
-.rm.ul4{background:#ff9a0a;color:#2b1500}
-.rm.ul5{background:#ffc80a;color:#2b2000}
-.rw.ur1{--uc:#e8171c}.rw.ur2{--uc:#ff3d1a}.rw.ur3{--uc:#ff6a10}.rw.ur4{--uc:#ff9a0a}.rw.ur5{--uc:#ffc80a}
+.rm.ul2{background:#ff4f12;color:#fff}
+.rm.ul3{background:#ffd60a;color:#2b2400}
+.rm.ul4{background:#8fd63a;color:#162600}
+.rm.ul5{background:#34c759;color:#04210c}
+.rm.ul6{background:#2a4a5a;color:#cde3ee}
+.rw.ur1{--uc:#e8171c}.rw.ur2{--uc:#ff4f12}.rw.ur3{--uc:#ffd60a}.rw.ur4{--uc:#8fd63a}.rw.ur5{--uc:#34c759}
 .rw.ur{background:color-mix(in srgb,var(--uc) 16%,var(--in));box-shadow:inset 0 0 0 1.5px var(--uc)}
 .rw.sel.ur{box-shadow:inset 0 0 0 1.5px var(--uc),inset 0 0 0 3.5px var(--cc)}
 </style>
@@ -322,7 +323,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
     <div class="row2"><button onclick="T.resetRes()">結果だけ消す</button><button onclick="T.resetAll()">全データを消す</button></div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.2.0</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.2.1</div>
 </div>
 </div>
 
@@ -485,7 +486,7 @@ function cfRender(act){
  bx.style.display='';bx.innerHTML='<div class="hd"><span>'+(msgs[0].u?'出番が重なりそうです':'複数の部に出る選手')+'</span></div>'+msgs.map(function(m){return '<div class="'+(m.u?'ng':'sm')+'" style="margin-bottom:6px">'+m.t+'</div>'}).join('')}
 function hueOf(r){if(r>=999||r<0)return -1;if(r<0)r=0;return Math.round(Math.min(r,8)/8*130)}
 function ulv(r){return (r>=0&&r<=5)?Math.max(r,1):0}
-function rmCls(r){return 'rm'+((r>=999||r<0)?' rmn':'')+(r===0?' rm0':'')+(ulv(r)?' ul'+ulv(r):'')}
+function rmCls(r){return 'rm'+((r>=999||r<0)?' rmn':'')+(r===0?' rm0':'')+(ulv(r)?' ul'+ulv(r):(r>=6&&r<999?' ul6':''))}
 function rmSty(r){var h=hueOf(r);if(h<0)return '';var l=r<=5?Math.round((56+Math.max(r,0)*3.5)*10)/10:80,dl=r<=5?Math.round((41-Math.max(r,0)*1.8)*10)/10:32,ds=r<=5?64:52;return '--h:'+h+';--l:'+l+'%;--dl:'+dl+'%;--ds:'+ds+'%'}
 function cls(r){return rmCls(r)}
 function remText(r){return r>=999?'試合順は会場で確認':r<0?'結果未入力':r===0?'今':'あと'+r+'試合'}
