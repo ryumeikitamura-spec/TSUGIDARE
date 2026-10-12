@@ -71,6 +71,11 @@ textarea{min-height:200px;line-height:1.7}
 .asr{display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid var(--bd)}
 .asr .nm{flex:1;font-size:14px;min-width:0}
 .asr button{width:36px;padding:0;height:34px}
+.hdl{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;touch-action:none;cursor:grab;color:var(--sub);font-size:22px;user-select:none;-webkit-user-select:none;flex:none}
+.asr.ph{opacity:.3}
+.asr.drag{background:var(--card);border:1px solid var(--acc);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.28);padding:8px 6px;pointer-events:none}
+.ins{height:3px;background:var(--acc);border-radius:2px;margin:2px 0}
+body.dragging{user-select:none;-webkit-user-select:none}
 .asr select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;height:34px;padding:0 6px;max-width:92px}
 .toast{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));max-width:536px;margin:0 auto;background:#222;color:#fff;padding:12px 14px;border-radius:12px;font-size:14px;z-index:20;display:none}
 </style>
@@ -402,17 +407,49 @@ function r4(){
   if(c==='未定'&&!ss.length)return;
   if(c!=='未定')ss.sort(function(x,y){return (x.order_offset||0)-(y.order_offset||0)});
   var tot=0;ss.forEach(function(x){tot+=nmatch(x)});
-  h+='<div class="box"><div class="hd"><span>'+(c==='未定'?'未定の部':esc(clabel(c)))+'</span><span class="sm">'+(c==='未定'?ss.length+'部':ss.length+'部・'+tot+'試合')+'</span></div>';
-  if(!ss.length)h+='<div class="sm">まだ割り当てがありません。</div>';
+  h+='<div class="box asg" data-c="'+esc(c)+'"><div class="hd"><span>'+(c==='未定'?'未定の部':esc(clabel(c)))+'</span><span class="sm">'+(c==='未定'?ss.length+'部':ss.length+'部・'+tot+'試合')+'</span></div><div class="asrows" style="min-height:'+(ss.length?0:36)+'px">';
+  if(!ss.length)h+='<div class="sm asnone">ここへ部をドラッグできます。</div>';
   ss.forEach(function(x,k){
    var mc=mineCount(x),opt='<option value="未定"'+(c==='未定'?' selected':'')+'>未定</option>';
    for(var j=1;j<=n;j++)opt+='<option value="'+j+'"'+(String(j)===c?' selected':'')+'>'+j+'試合場</option>';
-   h+='<div class="asr"><span class="nm">'+esc(x.name)+'<br><span class="sm">'+(x.players||[]).length+'名・'+nmatch(x)+'試合'+(mc?'・自道場'+mc+'名':'')+'</span></span>'+(c!=='未定'?'<button onclick="T.asUp(\''+esc(x.id)+'\',-1)" aria-label="先にする"'+(k===0?' disabled':'')+'>▲</button><button onclick="T.asUp(\''+esc(x.id)+'\',1)" aria-label="後にする"'+(k===ss.length-1?' disabled':'')+'>▼</button>':'')+'<select onchange="T.asMove(\''+esc(x.id)+'\',this.value)" aria-label="試合場">'+opt+'</select></div>'});
-  h+='</div>'});
+   h+='<div class="asr" data-id="'+esc(x.id)+'">'+(c!=='未定'||n>0?'<span class="hdl" data-id="'+esc(x.id)+'" role="button" aria-label="つかんで並べ替え">≡</span>':'')+'<span class="nm">'+esc(x.name)+'<br><span class="sm">'+(x.players||[]).length+'名・'+nmatch(x)+'試合'+(mc?'・自道場'+mc+'名':'')+'</span></span><select onchange="T.asMove(\''+esc(x.id)+'\',this.value)" aria-label="試合場">'+opt+'</select></div>'});
+  h+='</div></div>'});
  $('asl').innerHTML=h;
 }
 function asRenumber(c){var as=ST.as,l=EV.sections.filter(function(x){return as.m[x.id]&&as.m[x.id].c===c}).sort(function(x,y){return as.m[x.id].o-as.m[y.id].o});l.forEach(function(x,k){as.m[x.id].o=k})}
 function asCommit(){save();index();pairClear();render()}
+function asMaterialize(){var as=ST.as;EV.sections.forEach(function(x){if(!as.m[x.id]&&String(x.court)!=='未定')as.m[x.id]={c:String(x.court),o:x.order_offset||0}});var cs={};Object.keys(as.m).forEach(function(k){cs[as.m[k].c]=1});Object.keys(cs).forEach(asRenumber)}
+var DR=null;
+function dragStart(e){
+ if(e.button>0)return;var h=e.target.closest&&e.target.closest('.hdl');if(!h||DR)return;
+ e.preventDefault();var row=h.closest('.asr'),r=row.getBoundingClientRect();
+ DR={id:h.getAttribute('data-id'),row:row,dy:e.clientY-r.top,pid:e.pointerId,t:null,h:h};
+ var g=row.cloneNode(true);g.className='asr drag';g.style.position='fixed';g.style.left=r.left+'px';g.style.top=r.top+'px';g.style.width=r.width+'px';g.style.zIndex=30;document.body.appendChild(g);DR.g=g;
+ row.classList.add('ph');document.body.classList.add('dragging');
+ try{h.setPointerCapture(e.pointerId)}catch(x){}
+ document.addEventListener('pointermove',dragMove);document.addEventListener('pointerup',dragEnd);document.addEventListener('pointercancel',dragCancel);
+}
+function dragMove(e){
+ if(!DR)return;e.preventDefault();DR.g.style.top=(e.clientY-DR.dy)+'px';
+ if(e.clientY<90)window.scrollBy(0,-14);else if(e.clientY>window.innerHeight-140)window.scrollBy(0,14);
+ var gs=[].slice.call(document.querySelectorAll('#asl .asg')),best=null,bd=1e9;
+ gs.forEach(function(g){var r=g.getBoundingClientRect(),d=e.clientY<r.top?r.top-e.clientY:(e.clientY>r.bottom?e.clientY-r.bottom:0);if(d<bd){bd=d;best=g}});
+ [].forEach.call(document.querySelectorAll('.ins'),function(n){n.parentNode.removeChild(n)});
+ if(!best){DR.t=null;return}
+ var box=best.querySelector('.asrows'),rows=[].slice.call(box.querySelectorAll('.asr')).filter(function(r){return r!==DR.row}),idx=0;
+ rows.forEach(function(r){var b=r.getBoundingClientRect();if(e.clientY>b.top+b.height/2)idx++});
+ var ins=document.createElement('div');ins.className='ins';
+ if(idx<rows.length)box.insertBefore(ins,rows[idx]);else box.appendChild(ins);
+ var none=box.querySelector('.asnone');if(none)none.style.display='none';
+ DR.t={c:best.getAttribute('data-c'),idx:idx};
+}
+function dragEnd(){var d=DR;dragClean();if(d&&d.t)T.asDrop(d.id,d.t.c,d.t.idx)}
+function dragCancel(){dragClean();r4()}
+function dragClean(){
+ document.removeEventListener('pointermove',dragMove);document.removeEventListener('pointerup',dragEnd);document.removeEventListener('pointercancel',dragCancel);
+ document.body.classList.remove('dragging');if(DR){if(DR.g&&DR.g.parentNode)DR.g.parentNode.removeChild(DR.g);if(DR.row)DR.row.classList.remove('ph')}
+ [].forEach.call(document.querySelectorAll('.ins'),function(n){n.parentNode.removeChild(n)});var d=DR;DR=null;return d;
+}
 function validateEv(d){
  if(!d||!Array.isArray(d.sections)||!d.sections.length)return '「sections」がありません';
  for(var i=0;i<d.sections.length;i++){var s=d.sections[i];if(s.id==null||s.court==null||!Array.isArray(s.players)||!Array.isArray(s.matches))return '部'+(i+1)+'に id・court・players・matches のどれかがありません'}
@@ -456,7 +493,8 @@ function render(){
 window.T={
  tab:function(i){var b=document.querySelectorAll('.tabs button');for(var k=0;k<b.length;k++){var n=+b[k].getAttribute('data-p');b[k].className=n===i?'on':'';$('p'+n).className='pg'+(n===i?' on':'')}if(i===1)gen();if(i===2)r2();if(i===3)r3();if(i===4)r4();window.scrollTo(0,0)},
  asN:function(d){if(!EV)return;snap();var as=ST.as,n=Math.max(0,Math.min(12,ncourt()+d));as.n=n;EV.sections.forEach(function(x){var a=as.m[x.id];if(a&&parseInt(a.c,10)>n)delete as.m[x.id]});asCommit()},
- asMove:function(id,c){if(!EV)return;snap();var as=ST.as,old=as.m[id]&&as.m[id].c;if(c==='未定'){as.m[id]={c:'未定',o:0}}else{var mx=-1;EV.sections.forEach(function(x){var a=as.m[x.id];if(x.id!==id&&a&&a.c===c)mx=Math.max(mx,a.o)});as.m[id]={c:c,o:mx+1}}asRenumber(c);if(old&&old!==c)asRenumber(old);asCommit()},
+ asDrop:function(id,c,idx){if(!EV)return;snap();asMaterialize();var as=ST.as,old=as.m[id]&&as.m[id].c;if(c==='未定'){as.m[id]={c:'未定',o:0}}else{var l=EV.sections.filter(function(x){return x.id!==id&&as.m[x.id]&&as.m[x.id].c===c}).sort(function(x,y){return as.m[x.id].o-as.m[y.id].o}).map(function(x){return x.id});l.splice(Math.max(0,Math.min(idx,l.length)),0,id);l.forEach(function(k,i){as.m[k]={c:c,o:i}})}if(old&&old!==c)asRenumber(old);asCommit()},
+ asMove:function(id,c){if(!EV)return;snap();asMaterialize();var as=ST.as,old=as.m[id]&&as.m[id].c;if(c==='未定'){as.m[id]={c:'未定',o:0}}else{var mx=-1;EV.sections.forEach(function(x){var a=as.m[x.id];if(x.id!==id&&a&&a.c===c)mx=Math.max(mx,a.o)});as.m[id]={c:c,o:mx+1}}asRenumber(c);if(old&&old!==c)asRenumber(old);asCommit()},
  asUp:function(id,d){if(!EV)return;snap();var as=ST.as,c=as.m[id]&&as.m[id].c;if(!c)return;asRenumber(c);var l=EV.sections.filter(function(x){return as.m[x.id]&&as.m[x.id].c===c}).sort(function(x,y){return as.m[x.id].o-as.m[y.id].o}),k=l.map(function(x){return x.id}).indexOf(id),j=k+d;if(j<0||j>=l.length)return;var t=as.m[l[k].id].o;as.m[l[k].id].o=as.m[l[j].id].o;as.m[l[j].id].o=t;asCommit()},
  asAuto:function(){if(!EV)return;var n=ncourt();if(n<1){toast('先に試合場の数を入れてください');return}snap();var as=ST.as;as.m={};var load=[],cnt=[];for(var i=0;i<n;i++){load.push(0);cnt.push(0)}EV.sections.forEach(function(x){var b=0;for(var i=1;i<n;i++)if(load[i]<load[b])b=i;as.m[x.id]={c:String(b+1),o:cnt[b]++};load[b]+=nmatch(x)});as.n=n;asCommit();toast('振り分けました。部ごとに変えられます')},
  asClear:function(){if(!EV)return;snap();ST.as.m={};asCommit()},
@@ -484,6 +522,7 @@ window.T={
  resetAll:function(){if(!confirm('大会データ・名簿・結果をすべてこの端末から消します。よろしいですか？'))return;EV=null;RO=null;ST={};fixST();HIST=[];rm('event');rm('roster');rm('state');index();pairClear();render()}
 };
 
+$('asl').addEventListener('pointerdown',dragStart);
 index();render();
 })();
 </script>
