@@ -42,7 +42,7 @@ textarea{min-height:220px;line-height:1.75}
 .pg{display:none}.pg.on{display:block}
 .pl{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:2px 10px 2px 8px;border-radius:12px;background:color-mix(in srgb,var(--cc) 14%,var(--card));color:var(--tx);white-space:nowrap}
 .pl::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--cc)}
-#bigbox{padding:0;overflow:hidden}
+#bigbox{padding:0;overflow:hidden;border:2px solid var(--acc)}
 .hero{padding:10px 16px 16px}
 .hero .hh{display:flex;align-items:center;gap:8px;min-height:32px}
 .hero .hh .sm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -66,7 +66,7 @@ textarea{min-height:220px;line-height:1.75}
 .bt button{flex:1;height:56px;font-size:17px;border-radius:16px}
 .rw{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;margin:0 0 8px;border-radius:16px;background:var(--in);cursor:pointer;position:relative;overflow:hidden}
 .rw::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cc)}
-.rw.sel{background:color-mix(in srgb,var(--cc) 13%,var(--card));box-shadow:inset 0 0 0 1.5px var(--cc)}
+.rw.sel{background:color-mix(in srgb,var(--acc) 10%,var(--card));box-shadow:inset 0 0 0 2px var(--acc)}
 .rw .sm{font-weight:500}
 .chip{min-width:56px;text-align:center;font-size:13px;font-weight:800;padding:6px 6px;border-radius:10px;flex:none}
 .rt{margin-left:auto;text-align:right;font-size:11px;color:var(--sub);line-height:1.4;flex:none}
@@ -234,7 +234,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .rm.u6{background:var(--ub6);color:var(--ut6)}
 .rw.ur0{--uc:var(--ub0)}.rw.ur1{--uc:var(--ub1)}.rw.ur2{--uc:var(--ub2)}.rw.ur3{--uc:var(--ub3)}.rw.ur4{--uc:var(--ub4)}.rw.ur5{--uc:var(--ub5)}
 .rw.ur{background:color-mix(in srgb,var(--uc) 16%,var(--in));box-shadow:inset 0 0 0 1.5px var(--uc)}
-.rw.sel.ur{box-shadow:inset 0 0 0 1.5px var(--uc),inset 0 0 0 3.5px var(--cc)}
+.rw.sel.ur{box-shadow:inset 0 0 0 2px var(--acc),inset 0 0 0 4px var(--uc)}
 .uc-pal{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:8px 0 12px}
 .uc-pal div{height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
 .uc-row{display:flex;align-items:center;gap:10px;padding:5px 0}
@@ -385,7 +385,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.0</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.1</div>
 </div>
 </div>
 
