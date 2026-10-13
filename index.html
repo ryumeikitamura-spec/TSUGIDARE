@@ -407,7 +407,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.7</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.8</div>
 </div>
 </div>
 
@@ -552,19 +552,36 @@ function genRR(sec){
 var HI={};
 function hiN(sec){var v=parseInt(ST.hn&&ST.hn[sec.id],10);return (v>=1&&v<=10)?v:3}
 function genHigh(sec){
- var N=hiN(sec),ps=(sec.players||[]).map(function(p){return p.id}).filter(function(id){return ST.out[sec.id+'|'+id]!==2}),n=ps.length,out=[],no=0,i=0,def=null,dw=0,known=true,wins={},ach={},sa,sb;
+ var N=hiN(sec),ps=(sec.players||[]).map(function(p){return p.id}).filter(function(id){return ST.out[sec.id+'|'+id]!==2}),n=ps.length,out=[],no=0,i=0,def=null,dw=0,known=true,wins={},ach={},faced={},g=0;
  ps.forEach(function(id){wins[id]=0});
- for(;;){
-  if(known&&def==null){if(i+1>=n)break;sa={player:ps[i++]};sb={player:ps[i++]}}
-  else{if(i>=n)break;sa=known?{player:def}:{winner_of:no};sb={player:ps[i++]}}
-  no++;out.push({no:no,a:sa,b:sb,hi:1});
+ while(g++<3000){
+  var sa,sb,fb=false,cand=null,k;
+  if(known){
+   if(def==null){
+    if(i>=n)break;
+    if(i===n-1){def=ps[i++];dw=0;faced={};faced[def]=1;continue}
+    sa={player:ps[i++]};sb={player:ps[i++]};faced={};faced[sa.player]=1;faced[sb.player]=1;
+   }else if(i<n){sa={player:def};sb={player:ps[i++]};faced[sb.player]=1}
+   else{
+    for(k=n-1;k>=0;k--){var id=ps[k];if(id!==def&&!faced[id]&&!ach[id]){cand=id;break}}
+    if(cand==null)break;
+    sa={player:def};sb={player:cand};fb=true;faced[cand]=1;
+   }
+  }else{if(i>=n)break;sa={winner_of:no};sb={player:ps[i++]}}
+  no++;out.push({no:no,a:sa,b:sb,hi:1,fb:fb?1:0});
   if(!known)continue;
   var r=ST.res[sec.id+'|'+no];if(!r){known=false;continue}
   var A=sa.player,B=sb.player,ft=r.kind==='wo',w=r.w!=null?r.w:(r.l!=null?(r.l===A?B:(r.l===B?A:null)):null);
   if(w==null||(w!==A&&w!==B)){known=false;continue}
   if(!ft)wins[w]++;
-  var nw=(w===def&&def!=null)?dw+(ft?0:1):(ft?0:1);
-  if(!ft&&nw>=N){ach[w]=1;def=null;dw=0}else{def=w;dw=nw}
+  if(fb){
+   if(w===def){var nw1=dw+(ft?0:1);if(!ft&&nw1>=N){ach[w]=1;def=null;dw=0}else dw=nw1}
+   else{def=null;dw=0}
+  }else{
+   var nw=(w===def&&def!=null)?dw+(ft?0:1):(ft?0:1);
+   if(w!==def){faced={};faced[A]=1;faced[B]=1}
+   if(!ft&&nw>=N){ach[w]=1;def=null;dw=0}else{def=w;dw=nw}
+  }
  }
  return {m:out,wins:wins,ach:ach,N:N,done:known};
 }
@@ -572,12 +589,13 @@ function hiNext(sec){var ms=(sec.matches||[]).slice().sort(function(x,y){return 
 function hiClear(sec,no){Object.keys(ST.res).forEach(function(k){if(k.indexOf(sec.id+'|')!==0)return;var n=parseInt(k.slice(String(sec.id).length+1),10);if(n>no){var r=ST.res[k];if(r&&r.kind==='wo'&&r.l!=null&&ST.out[sec.id+'|'+r.l]===1)delete ST.out[sec.id+'|'+r.l];delete ST.res[k]}})}
 function hiState(sec,pid){
  if(ST.out[sec.id+'|'+pid])return {out:true,wd:true};
- var any=false,ms=(sec.matches||[]).slice().sort(function(x,y){return x.no-y.no});
- for(var i=0;i<ms.length;i++){var m=ms[i];if(slot(sec,m.a)!==pid&&slot(sec,m.b)!==pid)continue;any=true;if(!rs(sec,m.no))return {cur:m.no};if(winner(sec,m.no)!==pid)return {out:true,hi:true,lost:true,at:m.no}}
+ var any=false,lost=false,cur=null,ms=(sec.matches||[]).slice().sort(function(x,y){return x.no-y.no});
+ for(var i=0;i<ms.length;i++){var m=ms[i];if(slot(sec,m.a)!==pid&&slot(sec,m.b)!==pid)continue;any=true;if(!rs(sec,m.no)){if(cur==null)cur=m.no;continue}if(winner(sec,m.no)!==pid)lost=true}
+ if(cur!=null)return {cur:cur};
  if(!any)return {none:true};
- return {out:true,hi:true};
+ return lost?{out:true,hi:true,lost:true}:{out:true,hi:true};
 }
-function hiLabel(sec,pid){var h=HI[sec.id]||{wins:{},ach:{},N:3},w=h.wins[pid]||0;if(h.ach[pid])return h.N+'人抜き達成';var st=hiState(sec,pid);return st.lost?(w?w+'勝で敗退':'初戦敗退'):'勝ち残り　'+w+'勝'}
+function hiLabel(sec,pid){var h=HI[sec.id]||{wins:{},ach:{},N:3},w=h.wins[pid]||0;if(h.ach[pid])return h.N+'人抜き達成';var st=hiState(sec,pid);return st.lost?(w?w+'勝で敗退':'初戦敗退'):(h.done?w+'勝で終了':'勝ち残り　'+w+'勝')}
 function fmApply(sec){
  var f=fmOf(sec),ms=sec.matches||[],gen=!!(ms.length&&(ms[0].rr||ms[0].hi));
  if(f==='league'||f==='high'){
@@ -614,7 +632,7 @@ function hiTbl(sec){
  var h=HI[sec.id]||{wins:{},ach:{},N:3},ps=sec.players||[];if(ps.length<2)return '<div class="sm">この区分は選手が1人のため、試合がありません。</div>';
  var nx=hiNext(sec),o='<table class="lg hi"><thead><tr><th class="lgn"></th><th>勝</th><th>状況</th></tr></thead><tbody>';
  ps.forEach(function(p,i){var s=pstate(sec,p.id),t;
-  if(s.wd)t='欠場';else if(s.cur!=null)t=(nx===s.cur)?'<b class="lgw">いま</b>':'待ち';else if(s.none)t='—';else if(h.ach[p.id])t='<b class="lgw">'+h.N+'人抜き</b>';else t=s.lost?'敗退':'勝ち残り';
+  if(s.wd)t='欠場';else if(s.cur!=null)t=(nx===s.cur)?'<b class="lgw">'+((sec.mm[s.cur]||{}).fb?'折り返し いま':'いま')+'</b>':'待ち';else if(s.none)t='—';else if(h.ach[p.id])t='<b class="lgw">'+h.N+'人抜き</b>';else t=s.lost?'敗退':(h.done?(h.wins[p.id]||0)+'勝で終了':'勝ち残り');
   var mine=isMine(p);
   o+='<tr'+((s.cur!=null&&nx===s.cur)?' class="lgc2" onclick="T.tbOpen('+jq(String(sec.id))+','+s.cur+')"':'')+'><th class="lgn'+(mine?' mine':'')+'"><span class="lgi">'+(i+1)+'</span>'+(mine?'★':'')+esc(p.name)+'</th><td class="lgs">'+(h.wins[p.id]||0)+'</td><td class="lgt">'+t+'</td></tr>'});
  return o+'</tbody></table>';
@@ -754,10 +772,10 @@ function tbl(){
  var sec=EV.sections.filter(function(x){return String(x.id)===TB.s})[0],fm=(sec.format==='league'||sec.format==='high')?sec.format:'tournament';
  bx.style.display='';
  $('tbw').innerHTML=fm==='league'?leagueTbl(sec):(fm==='high'?hiTbl(sec):bracketSvg(sec));
- $('tbleg').textContent=fm==='high'?'番号は出場の順番です。勝った人は次の番号の人と対戦し、'+hiN(sec)+'勝した人は抜けて、残りで続けます（待ち＝この先で出番になる人）。行をタップすると、いまの試合の結果を入れられます。　★＝自道場':fm==='league'?'○＝勝ち　●＝負け　不＝不戦　点線の枠をタップすると結果を入れられます。表の行と列の数字は同じ選手です。順位は勝ち数、同じなら直接対決で決めています（薄い数字は暫定、＊は同率）。　★＝自道場':(TB.mode==='mk'?'選手の枠をタップすると、橙の枠のマークが付きます（他の道場の友達など）。':'選手の枠、点線の枠、丸の数字をタップすると、結果を入れられます。')+'　青の枠＝自道場　薄い字＝負け　丸の数字＝第◯試合';
+ $('tbleg').textContent=fm==='high'?'番号は出場の順番です。勝った人は次の番号の人と対戦し、'+hiN(sec)+'勝した人は抜けて、残りで続けます。最後の番号まで来たら折り返し、番号の大きい方から順に戦います（折り返しの相手が勝ったら、そこで終わり）。行をタップすると、いまの試合の結果を入れられます。　★＝自道場':fm==='league'?'○＝勝ち　●＝負け　不＝不戦　点線の枠をタップすると結果を入れられます。表の行と列の数字は同じ選手です。順位は勝ち数、同じなら直接対決で決めています（薄い数字は暫定、＊は同率）。　★＝自道場':(TB.mode==='mk'?'選手の枠をタップすると、橙の枠のマークが付きます（他の道場の友達など）。':'選手の枠、点線の枠、丸の数字をタップすると、結果を入れられます。')+'　青の枠＝自道場　薄い字＝負け　丸の数字＝第◯試合';
  if(fm!=='tournament')$('tbleg').textContent=$('tbleg').textContent.replace(/　青の枠＝自道場　薄い字＝負け　丸の数字＝第◯試合$/,'');
  var ms=(sec.matches||[]).slice().sort(function(a,b){var x=rank(sec,a.no),y=rank(sec,b.no);return (x==null?9999:x)-(y==null?9999:y)||a.no-b.no}),l='';
- ms.forEach(function(m){var rk=rank(sec,m.no),t=(rk!=null?'第'+rk+'試合':'別会場')+(fm!=='tournament'?'':(m.third?'（3位決定戦）':(sec.par[m.no]==null?'（決勝）':''))),rt=resText(sec,m.no);
+ ms.forEach(function(m){var rk=rank(sec,m.no),t=(rk!=null?'第'+rk+'試合':'別会場')+(fm!=='tournament'?(m.fb?'（折り返し）':''):(m.third?'（3位決定戦）':(sec.par[m.no]==null?'（決勝）':''))),rt=resText(sec,m.no);
   l+='<div class="mrow" onclick="T.shOpen(\''+esc(sec.id)+'\','+m.no+')"><div class="t">'+esc(t)+'</div><div class="v">'+esc(slotLabel(sec,m.a))+'　対　'+esc(slotLabel(sec,m.b))+'</div>'+(rt?'<div class="r">'+esc(rt)+'</div>':'<div class="t">未入力</div>')+'</div>'});
  mb.style.display='';$('tbm').innerHTML=l||'<div class="sm">試合がありません。</div>';
 }
@@ -837,7 +855,7 @@ function r0(){
  if(f){
   var ee=etaOf(f),wp=[];
   var lgf=f.sec.format==='league',hif=f.sec.format==='high';
-  if(hif){var hh=HI[f.sec.id]||{wins:{},N:3};wp.push('高点試合　いま<b>'+(hh.wins[f.p.id]||0)+'</b>勝（'+hh.N+'勝で抜け）')}
+  if(hif){var hh=HI[f.sec.id]||{wins:{},N:3};if((f.sec.mm[f.no]||{}).fb)wp.push('折り返しの試合です（相手が勝っても、ここで終わりです）');wp.push('高点試合　いま<b>'+(hh.wins[f.p.id]||0)+'</b>勝（'+hh.N+'勝で抜け）')}
   if(lgf){var lgs=lgStand(f.sec).st[f.p.id];wp.push('リーグ戦　あと<b>'+lgLeft(f.sec,f.p.id)+'</b>試合（'+lgs.w+'勝'+lgs.l+'敗）')}
   if(f.path.length&&nplGet())wp.push('次の試合　<b>'+f.path.join(', ')+'</b>');
   var gd=(lgf||hif)?'':f.st.third?'3位決定戦です':(!f.path.length?'この試合が決勝です':(f.ri&&f.ri.d===1?'準決勝です':''));
