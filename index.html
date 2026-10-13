@@ -293,6 +293,25 @@ header #hdate .d{font-size:11px;color:var(--sub)}
 .lgt{text-align:left;padding:0 10px;font-size:13px;color:var(--sub);white-space:nowrap}
 .lg.hi tbody tr.lgc2{cursor:pointer}.lg.hi tbody tr.lgc2:active{background:var(--in)}
 .lg.hi th.lgn{min-width:130px}
+.hwrap{position:relative}.hga{position:absolute;left:0;top:0}
+.hr{height:52px;box-sizing:border-box;display:flex;align-items:center;gap:8px;border-top:1px solid var(--bd);cursor:pointer}.hr:first-of-type{border-top:0}
+.hr.ok{background:color-mix(in srgb,#15803d 12%,var(--card));margin-right:-14px;padding-right:14px;border-radius:0 10px 10px 0}
+.hr.now{box-shadow:inset 3px 0 0 var(--acc)}
+.hno{width:20px;color:var(--sub);font-size:12px;text-align:right;flex:none}
+.hnb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.hnm{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hnm.mine{color:var(--acc)}
+.hst{font-size:11px;font-weight:600;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hst.ok{color:#15803d}
+.hmk{display:flex;flex-wrap:wrap;gap:4px;flex:none;justify-content:flex-end;max-width:104px}
+.hm{display:inline-block;width:18px;height:18px;position:relative;font-style:normal;flex:none}
+.hm.w{border:2.4px solid var(--acc);border-radius:50%;box-sizing:border-box}
+.hm.d::before,.hm.d::after{content:"";position:absolute;left:1px;right:1px;top:50%;height:0;border-top:2.6px solid var(--sub);border-radius:2px}
+.hm.d::before{transform:rotate(45deg)}.hm.d::after{transform:rotate(-45deg)}
+.hm.l::before{content:"";position:absolute;left:0;top:1px;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid var(--sub);opacity:.7}
+.hm.l::after{content:"";position:absolute;left:3.5px;top:7px;width:0;height:0;border-left:5.5px solid transparent;border-right:5.5px solid transparent;border-bottom:9px solid var(--card)}
+.hm.dsh.w{border-style:dashed}.hm.dsh.d::before,.hm.dsh.d::after{border-top-style:dashed}
+.ha{fill:none;stroke:var(--sub);stroke-width:2}.ha.m{stroke:var(--acc)}.ha.d{opacity:.5}.hc{fill:var(--sub)}.hc.m{fill:var(--acc)}.hc.d{opacity:.5}
+.hwin{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}.hwin .sm{width:100%}
+.hwp{background:color-mix(in srgb,#15803d 14%,var(--card));color:#15803d;border-radius:12px;padding:6px 12px;font-weight:700;font-size:15px;line-height:1.2}.hwp small{display:block;font-size:11px;font-weight:600;opacity:.85}
+.hlg{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--sub);margin-top:12px;align-items:center}.hlg span{display:flex;align-items:center;gap:5px}
 .lgs{min-width:34px;font-weight:700;font-size:15px}
 .lgr{min-width:44px;font-weight:800;font-size:16px}.lgr.prov{opacity:.45}
 .sheetnote{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 0;font-size:16px}
@@ -407,7 +426,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.8</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.9</div>
 </div>
 </div>
 
@@ -563,7 +582,7 @@ function genHigh(sec){
     sa={player:ps[i++]};sb={player:ps[i++]};faced={};faced[sa.player]=1;faced[sb.player]=1;
    }else if(i<n){sa={player:def};sb={player:ps[i++]};faced[sb.player]=1}
    else{
-    for(k=n-1;k>=0;k--){var id=ps[k];if(id!==def&&!faced[id]&&!ach[id]){cand=id;break}}
+    for(k=n-1;k>=0;k--){var id=ps[k];if(id!==def&&!faced[id]){cand=id;break}}
     if(cand==null)break;
     sa={player:def};sb={player:cand};fb=true;faced[cand]=1;
    }
@@ -571,6 +590,7 @@ function genHigh(sec){
   no++;out.push({no:no,a:sa,b:sb,hi:1,fb:fb?1:0});
   if(!known)continue;
   var r=ST.res[sec.id+'|'+no];if(!r){known=false;continue}
+  if(r.d){def=null;dw=0;faced={};continue}
   var A=sa.player,B=sb.player,ft=r.kind==='wo',w=r.w!=null?r.w:(r.l!=null?(r.l===A?B:(r.l===B?A:null)):null);
   if(w==null||(w!==A&&w!==B)){known=false;continue}
   if(!ft)wins[w]++;
@@ -589,13 +609,18 @@ function hiNext(sec){var ms=(sec.matches||[]).slice().sort(function(x,y){return 
 function hiClear(sec,no){Object.keys(ST.res).forEach(function(k){if(k.indexOf(sec.id+'|')!==0)return;var n=parseInt(k.slice(String(sec.id).length+1),10);if(n>no){var r=ST.res[k];if(r&&r.kind==='wo'&&r.l!=null&&ST.out[sec.id+'|'+r.l]===1)delete ST.out[sec.id+'|'+r.l];delete ST.res[k]}})}
 function hiState(sec,pid){
  if(ST.out[sec.id+'|'+pid])return {out:true,wd:true};
- var any=false,lost=false,cur=null,ms=(sec.matches||[]).slice().sort(function(x,y){return x.no-y.no});
- for(var i=0;i<ms.length;i++){var m=ms[i];if(slot(sec,m.a)!==pid&&slot(sec,m.b)!==pid)continue;any=true;if(!rs(sec,m.no)){if(cur==null)cur=m.no;continue}if(winner(sec,m.no)!==pid)lost=true}
+ var any=false,last='',cur=null,ms=(sec.matches||[]).slice().sort(function(x,y){return x.no-y.no});
+ for(var i=0;i<ms.length;i++){var m=ms[i];if(slot(sec,m.a)!==pid&&slot(sec,m.b)!==pid)continue;any=true;var r=rs(sec,m.no);if(!r){if(cur==null)cur=m.no;continue}last=r.d?'d':(winner(sec,m.no)===pid?'w':'l')}
  if(cur!=null)return {cur:cur};
  if(!any)return {none:true};
- return lost?{out:true,hi:true,lost:true}:{out:true,hi:true};
+ return {out:true,hi:true,lost:last==='l',drew:last==='d'};
 }
-function hiLabel(sec,pid){var h=HI[sec.id]||{wins:{},ach:{},N:3},w=h.wins[pid]||0;if(h.ach[pid])return h.N+'人抜き達成';var st=hiState(sec,pid);return st.lost?(w?w+'勝で敗退':'初戦敗退'):(h.done?w+'勝で終了':'勝ち残り　'+w+'勝')}
+function hiAbsent(sec,pid){
+ var ms=sec.matches||[];
+ for(var i=0;i<ms.length;i++){var m=ms[i];if((slot(sec,m.a)===pid||slot(sec,m.b)===pid)&&rs(sec,m.no)){toast('すでに試合をした人は、欠場にできません。結果を直してください');return false}}
+ snap();ST.out[sec.id+'|'+pid]=2;return true;
+}
+function hiLabel(sec,pid){var h=HI[sec.id]||{wins:{},ach:{},N:3},w=h.wins[pid]||0;if(h.ach[pid])return h.N+'人抜き達成';var st=hiState(sec,pid);return st.drew?(w?w+'勝・':'')+'引き分けで終了':st.lost?(w?w+'勝で敗退':'初戦敗退'):(h.done?w+'勝で終了':'勝ち残り　'+w+'勝')}
 function fmApply(sec){
  var f=fmOf(sec),ms=sec.matches||[],gen=!!(ms.length&&(ms[0].rr||ms[0].hi));
  if(f==='league'||f==='high'){
@@ -630,12 +655,26 @@ function lgState(sec,pid){
 function lgLabel(sec,pid){var S=lgStand(sec),x=S.st[pid];return (S.left?'暫定 ':'')+x.rank+'位'+(x.tie?'（同率）':'')+'　'+x.w+'勝'+x.l+'敗'}
 function hiTbl(sec){
  var h=HI[sec.id]||{wins:{},ach:{},N:3},ps=sec.players||[];if(ps.length<2)return '<div class="sm">この区分は選手が1人のため、試合がありません。</div>';
- var nx=hiNext(sec),o='<table class="lg hi"><thead><tr><th class="lgn"></th><th>勝</th><th>状況</th></tr></thead><tbody>';
- ps.forEach(function(p,i){var s=pstate(sec,p.id),t;
-  if(s.wd)t='欠場';else if(s.cur!=null)t=(nx===s.cur)?'<b class="lgw">'+((sec.mm[s.cur]||{}).fb?'折り返し いま':'いま')+'</b>':'待ち';else if(s.none)t='—';else if(h.ach[p.id])t='<b class="lgw">'+h.N+'人抜き</b>';else t=s.lost?'敗退':(h.done?(h.wins[p.id]||0)+'勝で終了':'勝ち残り');
-  var mine=isMine(p);
-  o+='<tr'+((s.cur!=null&&nx===s.cur)?' class="lgc2" onclick="T.tbOpen('+jq(String(sec.id))+','+s.cur+')"':'')+'><th class="lgn'+(mine?' mine':'')+'"><span class="lgi">'+(i+1)+'</span>'+(mine?'★':'')+esc(p.name)+'</th><td class="lgs">'+(h.wins[p.id]||0)+'</td><td class="lgt">'+t+'</td></tr>'});
- return o+'</tbody></table>';
+ var RH=52,G=84,X0=G-4,nx=hiNext(sec),idx={},mk={},lastNo={},svg='',rows='',win='',ms=(sec.matches||[]).slice().sort(function(x,y){return x.no-y.no});
+ ps.forEach(function(p,i){idx[p.id]=i;mk[p.id]=[]});
+ ms.forEach(function(m){var a=slot(sec,m.a),b=slot(sec,m.b);if(a==null||b==null||idx[a]==null||idx[b]==null)return;var r=rs(sec,m.no);if(!r)return;
+  var w=winner(sec,m.no),ra,rb,ds=m.fb?' dsh':'';
+  if(r.d){ra='d';rb='d'}else{ra=(w===a)?'w':'l';rb=(w===b)?'w':'l'}
+  mk[a].push('<i class="hm '+ra+ds+'"></i>');mk[b].push('<i class="hm '+rb+ds+'"></i>');lastNo[a]=m.no;lastNo[b]=m.no;
+  var ya=idx[a]*RH+RH/2,yb=idx[b]*RH+RH/2,d=12+Math.abs(idx[a]-idx[b])*9,cl=r.d?'d':(isMine(sec.pp[a])?'m':'');
+  svg+='<path class="ha '+cl+'" d="M'+X0+' '+ya+' C'+(X0-d)+' '+ya+' '+(X0-d)+' '+yb+' '+X0+' '+yb+'"'+(m.fb?' stroke-dasharray="5 4"':'')+'/><circle class="hc '+cl+'" cx="'+X0+'" cy="'+yb+'" r="3"/>'});
+ ps.forEach(function(p,i){var s0=pstate(sec,p.id),t='',ok=!!h.ach[p.id],tg=null,mine=isMine(p),w0=h.wins[p.id]||0;
+  if(s0.wd)t='欠場（詰めて進行）';
+  else if(s0.cur!=null)t=(nx===s0.cur)?(((sec.mm[s0.cur]||{}).fb)?'折り返し　いま':'いま'):'待ち';
+  else if(s0.none)t='';
+  else if(ok)t=h.N+'人抜き達成';
+  else t=hiLabel(sec,p.id);
+  if(s0.cur!=null&&nx===s0.cur)tg=s0.cur;else if(lastNo[p.id]!=null)tg=lastNo[p.id];
+  if(ok)win+='<span class="hwp">'+(mine?'★ ':'')+esc(p.name)+'<small>'+h.N+'人抜き</small></span>';
+  rows+='<div class="hr'+(ok?' ok':'')+(s0.cur!=null&&nx===s0.cur?' now':'')+'"'+(tg!=null?' onclick="T.tbOpen('+jq(String(sec.id))+','+tg+')"':'')+'><span class="hno">'+(i+1)+'</span><span class="hnb"><span class="hnm'+(mine?' mine':'')+'">'+(mine?'★ ':'')+esc(p.name)+'</span><span class="hst'+(ok?' ok':'')+'">'+esc(t)+'</span></span><span class="hmk">'+mk[p.id].join('')+'</span></div>'});
+ return (win?'<div class="hwin"><div class="sm" style="margin-bottom:6px">'+h.N+'勝で抜け　達成者</div>'+win+'</div>':'')
+  +'<div class="hwrap" style="padding-left:'+G+'px"><svg class="hga" width="'+G+'" height="'+(RH*ps.length)+'" viewBox="0 0 '+G+' '+(RH*ps.length)+'">'+svg+'</svg>'+rows+'</div>'
+  +'<div class="hlg"><span><i class="hm w"></i>勝ち</span><span><i class="hm l"></i>負け</span><span><i class="hm d"></i>引き分け</span><span><i class="hm w dsh"></i>点線＝折り返し</span></div>';
 }
 function leagueTbl(sec){
  var ps=sec.players||[];if(ps.length<2)return '<div class="sm">この区分は選手が1人のため、試合がありません。</div>';
@@ -772,7 +811,7 @@ function tbl(){
  var sec=EV.sections.filter(function(x){return String(x.id)===TB.s})[0],fm=(sec.format==='league'||sec.format==='high')?sec.format:'tournament';
  bx.style.display='';
  $('tbw').innerHTML=fm==='league'?leagueTbl(sec):(fm==='high'?hiTbl(sec):bracketSvg(sec));
- $('tbleg').textContent=fm==='high'?'番号は出場の順番です。勝った人は次の番号の人と対戦し、'+hiN(sec)+'勝した人は抜けて、残りで続けます。最後の番号まで来たら折り返し、番号の大きい方から順に戦います（折り返しの相手が勝ったら、そこで終わり）。行をタップすると、いまの試合の結果を入れられます。　★＝自道場':fm==='league'?'○＝勝ち　●＝負け　不＝不戦　点線の枠をタップすると結果を入れられます。表の行と列の数字は同じ選手です。順位は勝ち数、同じなら直接対決で決めています（薄い数字は暫定、＊は同率）。　★＝自道場':(TB.mode==='mk'?'選手の枠をタップすると、橙の枠のマークが付きます（他の道場の友達など）。':'選手の枠、点線の枠、丸の数字をタップすると、結果を入れられます。')+'　青の枠＝自道場　薄い字＝負け　丸の数字＝第◯試合';
+ $('tbleg').textContent=fm==='high'?'弧は、勝ち残りの人から戦った相手へ伸びます（先の黒点が相手）。右の印は、その人の結果を試合の順に並べています。行をタップすると、その人の試合の結果を入れたり直したりできます。　★＝自道場':fm==='league'?'○＝勝ち　●＝負け　不＝不戦　点線の枠をタップすると結果を入れられます。表の行と列の数字は同じ選手です。順位は勝ち数、同じなら直接対決で決めています（薄い数字は暫定、＊は同率）。　★＝自道場':(TB.mode==='mk'?'選手の枠をタップすると、橙の枠のマークが付きます（他の道場の友達など）。':'選手の枠、点線の枠、丸の数字をタップすると、結果を入れられます。')+'　青の枠＝自道場　薄い字＝負け　丸の数字＝第◯試合';
  if(fm!=='tournament')$('tbleg').textContent=$('tbleg').textContent.replace(/　青の枠＝自道場　薄い字＝負け　丸の数字＝第◯試合$/,'');
  var ms=(sec.matches||[]).slice().sort(function(a,b){var x=rank(sec,a.no),y=rank(sec,b.no);return (x==null?9999:x)-(y==null?9999:y)||a.no-b.no}),l='';
  ms.forEach(function(m){var rk=rank(sec,m.no),t=(rk!=null?'第'+rk+'試合':'別会場')+(fm!=='tournament'?(m.fb?'（折り返し）':''):(m.third?'（3位決定戦）':(sec.par[m.no]==null?'（決勝）':''))),rt=resText(sec,m.no);
@@ -862,7 +901,7 @@ function r0(){
   if(gd)wp.push(gd);
   if(gd||sr)wp.push('応援お願いします！');
   var wl=wp.length?'<div class="w">'+wp.join('　')+'</div>':'';
-  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh"><span class="sec">'+esc(f.sec.name)+'　'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span>'+(sr?'<span class="rtag">'+esc(f.ri.tag)+'</span>':'')+'</div><div class="nrow"><div class="nm">'+esc(f.p.name)+(f.mk?'<span class="mkt">'+esc(f.p.team||'マーク')+'</span>':'')+'</div><div class="vs"><div>'+(f.opp?'<span class="tai">対</span>'+esc(f.opp):'相手は前の試合しだい')+'</div><div class="tm">'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile t1 '+cls(f.rem)+'" style="'+rmSty(f.rem)+'"><i>'+(ee?'開始の目安 '+ee.t:'いま')+'</i><b>'+remText(f.rem)+'</b></div><div class="tile ct"><i>試合場</i><b>'+esc(clabel(f.cid))+'</b></div></div>'+wl+'<div class="bt"><button onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button><button class="undo" onclick="T.undo()">戻す</button></div></div>';
+  b='<div class="hero" style="--cc:'+f.col+'"><div class="hh"><span class="sec">'+esc(f.sec.name)+'　'+(f.rk!=null?'第'+f.rk+'試合':'別会場')+'</span>'+(sr?'<span class="rtag">'+esc(f.ri.tag)+'</span>':'')+'</div><div class="nrow"><div class="nm">'+esc(f.p.name)+(f.mk?'<span class="mkt">'+esc(f.p.team||'マーク')+'</span>':'')+'</div><div class="vs"><div>'+(f.opp?'<span class="tai">対</span>'+esc(f.opp):'相手は前の試合しだい')+'</div><div class="tm">'+esc(f.oppT||'')+'</div></div></div><div class="tiles"><div class="tile t1 '+cls(f.rem)+'" style="'+rmSty(f.rem)+'"><i>'+(ee?'開始の目安 '+ee.t:'いま')+'</i><b>'+remText(f.rem)+'</b></div><div class="tile ct"><i>試合場</i><b>'+esc(clabel(f.cid))+'</b></div></div>'+wl+'<div class="bt"><button onclick="T.res(\''+esc(f.key)+'\',1)">勝ち</button><button onclick="T.res(\''+esc(f.key)+'\',0)">負け</button><button onclick="T.res(\''+esc(f.key)+'\',2)">欠場</button>'+(hif?'<button onclick="T.res(\''+esc(f.key)+'\',3)">引き分け</button>':'')+'<button class="undo" onclick="T.undo()">戻す</button></div></div>';
  }else b='<div class="big"><div class="s">出番の選手はいません。</div></div>';
  $('big').innerHTML=b;
  var l='',LN=lcfGet();act.forEach(function(it,ix){if(LN>0&&!LSTX&&ix>=LN)return;
@@ -1021,6 +1060,7 @@ function pname(sec,pid){var p=sec.pp[pid];return p?p.name:'?'}
 function slotLabel(sec,x){var p=slot(sec,x);if(p!=null)return pname(sec,p);if(x&&x.winner_of!=null){var r=rank(sec,x.winner_of);return '第'+(r!=null?r:'?')+'試合の勝者'}if(x&&x.loser_of!=null){var r2=rank(sec,x.loser_of);return '第'+(r2!=null?r2:'?')+'試合の敗者'}return '不戦'}
 function resText(sec,no){
  var r=rs(sec,no);if(!r)return '';
+ if(r.d)return '引き分け（2人とも終わり）';
  if(r.kind==='wo')return '欠場：'+pname(sec,r.l);
  var w=winner(sec,no);if(w==null)return r.l!=null?pname(sec,r.l)+' 負け':'';
  return pname(sec,w)+' 勝ち'+(r.way||r.tech?'（'+[r.way,r.tech].filter(Boolean).join('・')+'）':'');
@@ -1041,13 +1081,15 @@ if(pa==null||pb==null){
    if(z[1]==null&&z[0]&&z[0].winner_of!=null){h+='<div>';subPlayers(sec,z[0].winner_of).forEach(function(p){if(pstate(sec,p).out)return;h+=chp(pname(sec,p)+(isMine(sec.pp[p])?' ★':''),false,'T.shPick('+z[0].winner_of+','+jq(p)+')')});h+='</div>'}
   });
   $('shp').innerHTML=h;$('sheet').style.display='block';return}
- var wo=SH.wo!=null,qk=!!(SH.q&&SH.w!=null&&!wo);
+ var wo=SH.wo!=null||!!SH.dr,qk=!!(SH.q&&SH.w!=null&&!wo);
  if(qk){
   h+='<div class="sheetnote"><span><b>'+esc(pname(sec,SH.w))+'</b>の勝ち</span><button class="s" onclick="T.shFull()">変更</button></div><div class="shh">勝ち方</div><div>';
  }else{
   h+='<div class="shh">勝った人</div><div class="shw">';
   [pa,pb].forEach(function(p){var on=SH.w===p;h+='<button class="'+(on?'pri':'')+'" onclick="T.shW('+jq(p)+')">'+esc(pname(sec,p))+(sec.pp[p]&&sec.pp[p].team?'<span class="sm" style="display:block;color:inherit;opacity:.8">'+esc(sec.pp[p].team)+'</span>':'')+'</button>'});
-  h+='</div><div class="shh">欠場した人（不戦勝になります）</div><div>';
+  h+='</div>';
+  if(sec.format==='high')h+='<div class="shh">引き分け</div><div>'+chp('引き分け（2人とも終わり）',!!SH.dr,'T.shDr()')+'</div>';
+  h+='<div class="shh">'+(sec.format==='high'?'欠場した人（まだ試合をしていない人だけ。詰めて進めます）':'欠場した人（不戦勝になります）')+'</div><div>';
   [pa,pb].forEach(function(p){h+=chp(pname(sec,p),SH.wo===p,'T.shWo('+jq(p)+')')});
   h+='</div><div class="shh">勝ち方</div><div>';
  }
@@ -1063,7 +1105,7 @@ function isElem(sec){var n=String(sec.name||'');return n.indexOf('小')>=0&&!/�
 function shOpen(sid,no,q){
  var sec=EV.sections.filter(function(x){return String(x.id)===String(sid)})[0];if(!sec)return;
  var r=rs(sec,no),w=r?winner(sec,no):null;
- SH={sec:sec,no:no,w:(r&&r.kind!=='wo')?w:null,wo:(r&&r.kind==='wo')?r.l:null,way:(r&&r.way)||'',tech:(r&&r.tech)||'',cat:'手技',q:!!q};
+ SH={sec:sec,no:no,dr:!!(r&&r.d),w:(r&&r.kind!=='wo')?w:null,wo:(r&&r.kind==='wo')?r.l:null,way:(r&&r.way)||'',tech:(r&&r.tech)||'',cat:'手技',q:!!q};
  if(SH.tech){Object.keys(TECH).forEach(function(c){if(TECH[c].indexOf(SH.tech)>=0){SH.cat=c;if(c==='絞技'||c==='関節技')SH.all=true}})}
  shRender();
 }
@@ -1200,19 +1242,21 @@ window.T={
   save();render();shRender()},
  shClose:function(){SH=null;shRender()},
  shFull:function(){if(!SH)return;SH.q=false;shRender()},
- shW:function(p){SH.w=SH.w===p?null:p;SH.wo=null;shRender()},
- shWo:function(p){SH.wo=SH.wo===p?null:p;if(SH.wo!=null){SH.w=null;SH.way='';SH.tech=''}shRender()},
+ shW:function(p){SH.w=SH.w===p?null:p;SH.wo=null;SH.dr=false;shRender()},
+ shDr:function(){SH.dr=!SH.dr;if(SH.dr){SH.w=null;SH.wo=null;SH.way='';SH.tech=''}shRender()},
+ shWo:function(p){SH.wo=SH.wo===p?null:p;SH.dr=false;if(SH.wo!=null){SH.w=null;SH.way='';SH.tech=''}shRender()},
  shWay:function(w){SH.way=SH.way===w?'':w;shRender()},
  shAll:function(){SH.all=!SH.all;if(!SH.all&&(SH.cat==='絞技'||SH.cat==='関節技'))SH.cat='手技';shRender()},
  shCat:function(c){SH.cat=c;shRender()},
  shTech:function(t){SH.tech=SH.tech===t?'':t;shRender()},
  shSave:function(){
   if(!SH)return;var sec=SH.sec,no=SH.no,k=sec.id+'|'+no;
-  if(SH.w==null&&SH.wo==null){toast('勝った人か、欠場した人を選んでください');return}
+  if(SH.w==null&&SH.wo==null&&!SH.dr){toast(sec.format==='high'?'勝った人、引き分け、欠場した人のどれかを選んでください':'勝った人か、欠場した人を選んでください');return}
+  if(sec.format==='high'&&SH.wo!=null){if(!hiAbsent(sec,SH.wo))return;SH=null;LASTREC=null;save();render();shRender();toast('欠場として詰めました');return}
   snap();var old=rs(sec,no),oldW=old?winner(sec,no):null,r;
   if(old&&old.kind==='wo'&&old.l!=null)delete ST.out[sec.id+'|'+old.l];
-  if(SH.wo!=null){r={l:SH.wo,w:null,kind:'wo'};ST.out[sec.id+'|'+SH.wo]=1}else{r={w:SH.w};if(SH.way)r.way=SH.way;if(SH.tech)r.tech=SH.tech}
-  ST.res[k]=r;var nw=winner(sec,no);if(old&&oldW!==nw)clearDown(sec,no);
+  if(SH.dr){r={d:1}}else if(SH.wo!=null){r={l:SH.wo,w:null,kind:'wo'};ST.out[sec.id+'|'+SH.wo]=1}else{r={w:SH.w};if(SH.way)r.way=SH.way;if(SH.tech)r.tech=SH.tech}
+  ST.res[k]=r;var nw=winner(sec,no);if(old&&(oldW!==nw||!!old.d!==!!r.d))clearDown(sec,no);
   var rk=rank(sec,no);if(rk!=null){var c=String(sec.court);markDone(c,Math.max(ST.done[c]||0,rk))}
   SH=null;LASTREC=null;save();render();shRender();toast('保存しました');
  },
@@ -1241,11 +1285,11 @@ window.T={
  pick:function(k){ST.sel=k;save();r0()},
  res:function(key,t){
   var it=BYK[key];if(!it)return;var sec=it.sec,pid=it.p.id,st=pstate(sec,pid);if(st.cur==null)return;
-  if(sec.format==='high'&&st.cur!==hiNext(sec)){
-   if(t===2){snap();ST.out[sec.id+'|'+pid]=2;save();render();toast(it.p.name+'を欠場にしました（試合は飛ばします）');return}
-   toast('前の試合の結果を先に入れてください');return}
+  if(sec.format==='high'){
+   if(t===2){if(hiAbsent(sec,pid)){save();render();toast(it.p.name+'を欠場にして、詰めました')}return}
+   if(st.cur!==hiNext(sec)){toast('前の試合の結果を先に入れてください');return}}
   snap();var no=st.cur,k=sec.id+'|'+no,rk=rank(sec,no),c=String(sec.court);
-  if(t===1)ST.res[k]={w:pid};else if(t===0)ST.res[k]={l:pid,w:null};else{ST.res[k]={l:pid,w:null,kind:'wo'};ST.out[sec.id+'|'+pid]=1}
+  if(t===3)ST.res[k]={d:1};else if(t===1)ST.res[k]={w:pid};else if(t===0)ST.res[k]={l:pid,w:null};else{ST.res[k]={l:pid,w:null,kind:'wo'};ST.out[sec.id+'|'+pid]=1}
   if(rk!=null)markDone(c,Math.max(ST.done[c]||0,rk));
   LASTREC={sid:sec.id,no:no};save();render();
   if(t===1){var mt=sec.mm[no];if(mt&&slot(sec,mt.a)!=null&&slot(sec,mt.b)!=null)shOpen(sec.id,no,true)}
