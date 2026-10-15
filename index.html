@@ -251,6 +251,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .uc-row select{width:76px;flex:none}
 .rtag{display:inline-block;font-size:12px;font-weight:800;padding:2px 10px;border-radius:9px;background:var(--in);color:var(--tx);margin-right:6px}
 .bk{fill:var(--card);stroke:var(--bd);stroke-width:1.2;cursor:pointer}
+.bk.alm{fill:color-mix(in srgb,var(--acc) 6%,var(--card));stroke:var(--acc);stroke-width:1.5;stroke-dasharray:4 3}
 .bk.mine{fill:color-mix(in srgb,var(--acc) 14%,var(--card));stroke:var(--acc);stroke-width:2}
 .bk.mk{stroke:#f59e0b;stroke-width:2.5}
 .bk.empty{fill:transparent;stroke-dasharray:4 3;cursor:pointer;pointer-events:all}
@@ -365,7 +366,10 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="hd"><span>道場生名簿</span><span id="ryr"></span></div>
     <div class="row2" style="margin:0 0 10px"><label class="btn"><input type="file" accept=".json,application/json" hidden onchange="T.loadRo(this)">名簿を読み込む</label></div>
     <div class="row2" style="margin:0 0 10px"><button onclick="T.ryear(-1)">前の年度</button><button onclick="T.ryear(0)">大会の年度</button><button onclick="T.ryear(1)">次の年度</button></div>
+    <div class="fl2" style="margin-bottom:10px">自道場の名前（初期値）<input type="text" id="clubdef" placeholder="例：◯◯道場" onchange="T.clubDef(this.value)"></div>
+    <div class="sm" style="margin:-4px 0 10px">大会ごとに変えたいときは、大会タブの「自道場の名前」で上書きできます。</div>
     <div id="roster"></div>
+    <div id="clash"></div>
   </div>
   <div class="box"><div class="hd"><span>戦績（この端末に蓄積）</span></div>
     <div class="sm" style="margin:0 0 8px">入れた結果はすべて貯めます（他の道場の選手も）。1つの試合は、勝った人と負けた人の2行で残ります。</div>
@@ -381,6 +385,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="row2"><label class="btn pri"><input type="file" accept=".json,application/json" hidden onchange="T.loadEv(this)">大会JSONを読み込む</label></div>
     <div class="hd" style="margin-top:16px"><span>保存してある大会</span></div>
     <div id="evlist"></div>
+    <div id="clash3"></div>
     <div class="sm" style="margin-top:6px">別の大会JSONを読み込むと、いまの大会は結果ごとここに残ります。「切り替え」で、いつでも戻せます。</div>
     <div class="row2"><button onclick="T.sample()">サンプルで試す</button><button onclick="T.dlSample()">サンプルJSONを保存</button></div>
   </div>
@@ -438,7 +443,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.12</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.13</div>
 </div>
 </div>
 
@@ -683,7 +688,7 @@ function hiTbl(sec){
   else if(ok)t=h.N+'人抜き達成';
   else t=hiLabel(sec,p.id);
   if(s0.cur!=null&&nx===s0.cur)tg=s0.cur;else if(lastNo[p.id]!=null)tg=lastNo[p.id];
-  if(ok)win+='<span class="hwp">'+(mine?'★ ':'')+esc(p.name)+'<small>'+h.N+'人抜き</small></span>';
+  if(ok)win+='<span class="hwp">'+(mine?'★ ':(isAlumni(p)?'☆ ':''))+esc(p.name)+'<small>'+h.N+'人抜き</small></span>';
   rows+='<div class="hr'+(ok?' ok':'')+(s0.cur!=null&&nx===s0.cur?' now':'')+'"'+(tg!=null?' onclick="T.tbOpen('+jq(String(sec.id))+','+tg+')"':'')+'><span class="hno">'+(i+1)+'</span><span class="hnb"><span class="hnm'+(mine?' mine':'')+'">'+(mine?'★ ':'')+esc(p.name)+'</span><span class="hst'+(ok?' ok':'')+'">'+esc(t)+'</span></span><span class="hmk">'+mk[p.id].join('')+'</span></div>'});
  return (win?'<div class="hwin"><div class="sm" style="margin-bottom:6px">'+h.N+'勝で抜け　達成者</div>'+win+'</div>':'')
   +'<div class="hwrap" style="padding-left:'+G+'px"><svg class="hga" width="'+G+'" height="'+(RH*ps.length)+'" viewBox="0 0 '+G+' '+(RH*ps.length)+'">'+svg+'</svg>'+rows+'</div>'
@@ -697,7 +702,7 @@ function leagueTbl(sec){
  h+='<th>順位</th><th>勝</th>';ps.forEach(function(p,i){h+='<th>'+(i+1)+'</th>'});
  h+='</tr></thead><tbody>';
  ps.forEach(function(p,i){var x=S.st[p.id],mine=isMine(p),po=!!ST.out[sec.id+'|'+p.id];
-  h+='<tr><th class="lgn'+(mine?' mine':'')+'"><span class="lgi">'+(i+1)+'</span>'+(mine?'★':'')+esc(p.name)+'</th><td class="lgr'+(S.left?' prov':'')+'">'+((x.w+x.l)?x.rank+(x.tie?'*':''):'–')+'</td><td class="lgs">'+x.w+'</td>';
+  h+='<tr><th class="lgn'+(mine?' mine':'')+'"><span class="lgi">'+(i+1)+'</span>'+(mine?'★':(isAlumni(p)?'☆':''))+esc(p.name)+'</th><td class="lgr'+(S.left?' prov':'')+'">'+((x.w+x.l)?x.rank+(x.tie?'*':''):'–')+'</td><td class="lgs">'+x.w+'</td>';
   ps.forEach(function(q,j){
    if(i===j){h+='<td class="lgx"></td>';return}
    var no=mm[p.id+'|'+q.id],r=no!=null?rs(sec,no):null,w=r?winner(sec,no):null,qo=!!ST.out[sec.id+'|'+q.id],c,ft=false;
@@ -735,7 +740,19 @@ function pstate(sec,pid){
  return {none:true};
 }
 function wins(sec,pid){var n=0,no=sec.leaf[pid];while(no!=null){var r=rs(sec,no);if(!r)break;if(winner(sec,no)!==pid)break;if(r.kind!=='wo')n++;no=sec.par[no]}return n}
-function isMine(p){if(p.mine!=null)return !!p.mine;var e=(EV&&EV.event)||{},t=p.team||'',al=(e.club_aliases||[]).concat(e.club?[e.club]:[]);return al.some(function(a){return a&&t.indexOf(a)>=0})}
+function clubDef(){var v=sg('clubdef');if(typeof v==='string'&&v.trim())return v.trim();return (RO&&typeof RO.club==='string')?RO.club.trim():''}
+function roMatch(name){if(!RO||!RO.members)return null;var n=norm(name);for(var i=0;i<RO.members.length;i++){var m=RO.members[i];if(norm(m.name)===n)return m;var al=m.aliases||[];for(var j=0;j<al.length;j++)if(norm(al[j])===n)return m}return null}
+function affOf(m){var a=m&&(m.affil||m.affiliations);return (Array.isArray(a)?a:[]).map(function(x){return typeof x==='string'?{team:x}:x}).filter(function(x){return x&&x.team})}
+function isAlumni(p){if(!p||isMine(p))return false;var m=roMatch(p.name);if(!m)return false;var t=norm(p.team||'');return !!t&&affOf(m).some(function(a){var q=norm(a.team);return q&&t.indexOf(q)>=0})}
+function starOf(p){return isMine(p)?'★ ':(isAlumni(p)?'☆ ':'')}
+function starS(p){return isMine(p)?' ★':(isAlumni(p)?' ☆':'')}
+function nameClash(){var out=[];if(!EV||!EV.sections)return out;var by={};
+ EV.sections.forEach(function(sec){if(sec.team)return;(sec.players||[]).forEach(function(p){var n=norm(p.name);if(!n)return;var o=by[n]=by[n]||{name:p.name,teams:{}};o.teams[p.team||'（所属なし）']=1})});
+ Object.keys(by).forEach(function(n){var o=by[n],ts=Object.keys(o.teams);if(ts.length>1)out.push('同じ名前で所属が違う選手がいます：'+o.name+'（'+ts.join('／')+'）。別の人かもしれません');
+  var m=roMatch(o.name);if(m)ts.forEach(function(t){var q={name:o.name,team:t==='（所属なし）'?'':t};if(isMine(q)||isAlumni(q))return;out.push('名簿の「'+m.name+'」と同じ名前ですが、所属が違います：'+t+'。同じ人なら、名簿の所属履歴に追加してください')})});
+ return out}
+function clashRender(){var c=nameClash(),h=c.length?c.map(function(x){return '<div class="dn"><span>'+esc(x)+'</span><span class="tag">確認</span></div>'}).join(''):'';['clash','clash3'].forEach(function(id){var e=$(id);if(e){e.style.display=c.length?'':'none';e.innerHTML=c.length?'<div class="hd" style="margin-top:12px"><span>同姓同名の確認</span></div>'+h:''}})}
+function isMine(p){if(p.mine!=null)return !!p.mine;var e=(EV&&EV.event)||{},t=p.team||'',al=(e.club_aliases||[]).concat((e.club||clubDef())?[e.club||clubDef()]:[]);return al.some(function(a){return a&&t.indexOf(a)>=0})}
 function oppTeam(sec,no,pid){var m=sec.mm[no],pa=slot(sec,m.a),pb=slot(sec,m.b),op=(pa===pid)?pb:pa;if(op==null)return '';var p=sec.pp[op];return p&&p.team?p.team:''}
 function oppText(sec,no,pid){
  var m=sec.mm[no],a=m.a,b=m.b,o=null;
@@ -749,7 +766,7 @@ function oppText(sec,no,pid){
 function mineItems(){
  var out=[],mkm=mkGet().m;BYK={};if(!EV||!EV.sections)return out;
  EV.sections.forEach(function(sec){(sec.players||[]).forEach(function(p){
-  var mine=isMine(p);if(!mine&&!mkm[sec.id+'|'+p.id])return;var st=pstate(sec,p.id),it={sec:sec,p:p,st:st,key:sec.id+'|'+p.id,mk:!mine};BYK[it.key]=it;
+  var mine=isMine(p);if(!mine&&!mkm[sec.id+'|'+p.id]&&!isAlumni(p))return;var st=pstate(sec,p.id),it={sec:sec,p:p,st:st,key:sec.id+'|'+p.id,mk:!mine};BYK[it.key]=it;
   if(st.cur!=null){
    var cid=String(sec.court),cc=court(cid);
    it.no=st.cur;it.rk=rank(sec,it.no);it.cid=cid;it.col=cc.color;
@@ -824,9 +841,9 @@ function tbl(){
  var sec=EV.sections.filter(function(x){return String(x.id)===TB.s})[0],fm=(sec.format==='league'||sec.format==='high')?sec.format:'tournament';
  bx.style.display='';
  $('tbw').innerHTML=fm==='league'?leagueTbl(sec):(fm==='high'?hiTbl(sec):bracketSvg(sec));
- $('tbleg').textContent=fm==='high'?'弧は、勝ち残りの人から戦った相手へ伸びます（先の黒点が相手）。右の印は、その人の結果を試合の順に並べています。行をタップすると、その人の試合の結果を入れたり直したりできます。　★＝自道場':fm==='league'?'○＝勝ち　●＝負け　不＝不戦　点線の枠をタップすると結果を入れられます。表の行と列の数字は同じ選手です。順位は勝ち数、同じなら直接対決で決めています（薄い数字は暫定、＊は同率）。　★＝自道場':(TB.mode==='mk'?'選手の枠をタップすると、橙の枠のマークが付きます（他の道場の友達など）。':'選手の枠、点線の枠、丸の数字をタップすると、結果を入れられます。')+'　青の枠＝自道場　薄い字＝負け　丸の数字＝第◯試合';
+ $('tbleg').textContent=fm==='high'?'弧は、勝ち残りの人から戦った相手へ伸びます（先の黒点が相手）。右の印は、その人の結果を試合の順に並べています。行をタップすると、その人の試合の結果を入れたり直したりできます。　★＝自道場':fm==='league'?'○＝勝ち　●＝負け　不＝不戦　点線の枠をタップすると結果を入れられます。表の行と列の数字は同じ選手です。順位は勝ち数、同じなら直接対決で決めています（薄い数字は暫定、＊は同率）。　★＝自道場':(TB.mode==='mk'?'選手の枠をタップすると、橙の枠のマークが付きます（他の道場の友達など）。':'選手の枠、点線の枠、丸の数字をタップすると、結果を入れられます。')+'　青の枠＝自道場（★）　破線の青枠＝元道場生（☆）　薄い字＝負け　丸の数字＝第◯試合';
  if(sec.team)$('tbleg').textContent+='　団体戦：各試合の内容は、下の試合の一覧をタップして入れます。';
- if(fm!=='tournament')$('tbleg').textContent=$('tbleg').textContent.replace(/　青の枠＝自道場　薄い字＝負け　丸の数字＝第◯試合$/,'');
+ if(fm!=='tournament')$('tbleg').textContent=$('tbleg').textContent.replace(/　青の枠＝自道場（★）　破線の青枠＝元道場生（☆）　薄い字＝負け　丸の数字＝第◯試合$/,'');
  var ms=(sec.matches||[]).slice().sort(function(a,b){var x=rank(sec,a.no),y=rank(sec,b.no);return (x==null?9999:x)-(y==null?9999:y)||a.no-b.no}),l='';
  ms.forEach(function(m){var rk=rank(sec,m.no),t=(rk!=null?'第'+rk+'試合':'別会場')+(fm!=='tournament'?(m.fb?'（折り返し）':''):(m.third?'（3位決定戦）':(sec.par[m.no]==null?'（決勝）':''))),rt=resText(sec,m.no);
   l+='<div class="mrow" onclick="T.shOpen(\''+esc(sec.id)+'\','+m.no+')"><div class="t">'+esc(t)+'</div><div class="v">'+esc(slotLabel(sec,m.a))+'　対　'+esc(slotLabel(sec,m.b))+'</div>'+(rt?'<div class="r">'+esc(rt)+'</div>':'<div class="t">未入力</div>')+'</div>'+(sec.team?tmTblHtml(sec,m):'')});
@@ -849,11 +866,11 @@ function bracketSvg(sec){
    var tn=tgt!=null?tgt:(sl&&sl.winner_of!=null?sl.winner_of:(sl&&sl.loser_of!=null?sl.loser_of:null));
    var lab=tn!=null?((sl&&sl.loser_of!=null)?'準決勝の結果入力':'結果入力'):(!sl?'不戦':'');
    return '<g'+(tn!=null?' onclick="T.tbOpen('+jq(String(sec.id))+','+jq(tn)+')"':'')+'><rect class="bk empty" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/>'+(lab?'<text class="'+(tn!=null?'bq':'bg')+'" x="'+(x+8)+'" y="'+(yc+4)+'">'+lab+'</text>':'')+'</g>'}
-  if(isMine(p))cl+=' mine';if(mk[sec.id+'|'+pid])cl+=' mk';
+  if(isMine(p))cl+=' mine';else if(isAlumni(p))cl+=' alm';if(mk[sec.id+'|'+pid])cl+=' mk';
   var w=no!=null?winner(sec,no):null,lost=(w!=null&&w!==pid);
   var nm=p.name,tm=p.team||'',tl=nm.length>7?' textLength="'+(BW-14)+'" lengthAdjust="spacingAndGlyphs"':'';
   if(tm.length>10)tm=tm.slice(0,10)+'…';
-  return '<g'+(lost?' class="bl"':'')+' onclick="T.tbBox('+jq(String(sec.id))+','+jq(no)+','+jq(pid)+')"><rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x+8)+'" y="'+(y+15)+'"'+tl+'>'+(isMine(p)?'★ ':'')+esc(nm)+'</text><text class="bkt" x="'+(x+8)+'" y="'+(y+29)+'">'+esc(tm)+'</text></g>'}
+  return '<g'+(lost?' class="bl"':'')+' onclick="T.tbBox('+jq(String(sec.id))+','+jq(no)+','+jq(pid)+')"><rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x+8)+'" y="'+(y+15)+'"'+tl+'>'+starOf(p)+esc(nm)+'</text><text class="bkt" x="'+(x+8)+'" y="'+(y+29)+'">'+esc(tm)+'</text></g>'}
  function junction(no,c,ya,yb){
   var xr=colX(c)+BW,xm=xr+GAP/2,y=(ya+yb)/2,rk=numOf(sec,no);
   lines.push('<path class="bj" d="M'+xr+' '+ya+'H'+xm+'M'+xr+' '+yb+'H'+xm+'M'+xm+' '+ya+'V'+yb+'M'+xm+' '+y+'H'+(xr+GAP)+'"/>');
@@ -866,14 +883,14 @@ function bracketSvg(sec){
    else out.push(box(colX(c),y,sl,no))});
   junction(no,c,P.ya,P.yb)});
  var H=TOP+row*ROWH+4;
- roots.forEach(function(r){var P=pos[r.no],w=winner(sec,r.no),x=colX(maxd+1),y=P.y-BH/2,p=w!=null?sec.pp[w]:null,cl='bk'+(p&&isMine(p)?' mine':'')+(p&&mk[sec.id+'|'+w]?' mk':'');
-  out.push(p?'<g onclick="T.tbBox('+jq(String(sec.id))+','+jq(r.no)+','+jq(w)+')"><rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x+8)+'" y="'+(y+15)+'">'+(isMine(p)?'★ ':'')+esc(p.name)+'</text><text class="bkt" x="'+(x+8)+'" y="'+(y+29)+'">優勝</text></g>':'<g onclick="T.tbOpen('+jq(String(sec.id))+','+jq(r.no)+')"><rect class="bk empty" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bq" x="'+(x+8)+'" y="'+(P.y+4)+'">優勝 結果入力</text></g>')});
+ roots.forEach(function(r){var P=pos[r.no],w=winner(sec,r.no),x=colX(maxd+1),y=P.y-BH/2,p=w!=null?sec.pp[w]:null,cl='bk'+(p&&isMine(p)?' mine':(p&&isAlumni(p)?' alm':''))+(p&&mk[sec.id+'|'+w]?' mk':'');
+  out.push(p?'<g onclick="T.tbBox('+jq(String(sec.id))+','+jq(r.no)+','+jq(w)+')"><rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x+8)+'" y="'+(y+15)+'">'+starOf(p)+esc(p.name)+'</text><text class="bkt" x="'+(x+8)+'" y="'+(y+29)+'">優勝</text></g>':'<g onclick="T.tbOpen('+jq(String(sec.id))+','+jq(r.no)+')"><rect class="bk empty" x="'+x+'" y="'+y+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bq" x="'+(x+8)+'" y="'+(P.y+4)+'">優勝 結果入力</text></g>')});
  heads[maxd+1]='優勝';
  if(sec.third){var t=sec.third,ya=H+ROWH*0.6,yb=ya+ROWH,c=maxd,tw=winner(sec,t.no);
   out.push('<text class="bh" x="'+(colX(c)+BW/2)+'" y="'+(ya-ROWH/2-4)+'">3位決定戦</text>');
   out.push(box(colX(c),ya,t.a,t.no));out.push(box(colX(c),yb,t.b,t.no));junction(t.no,c,ya,yb);
   var y3=(ya+yb)/2,p3=tw!=null?sec.pp[tw]:null,x3=colX(c+1);
-  out.push(p3?'<g><rect class="bk'+(isMine(p3)?' mine':'')+'" x="'+x3+'" y="'+(y3-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x3+8)+'" y="'+(y3-BH/2+15)+'">'+(isMine(p3)?'★ ':'')+esc(p3.name)+'</text><text class="bkt" x="'+(x3+8)+'" y="'+(y3-BH/2+29)+'">3位</text></g>':'<g onclick="T.tbOpen('+jq(String(sec.id))+','+jq(t.no)+')"><rect class="bk empty" x="'+x3+'" y="'+(y3-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bq" x="'+(x3+8)+'" y="'+(y3+4)+'">3位 結果入力</text></g>');
+  out.push(p3?'<g><rect class="bk'+(isMine(p3)?' mine':(isAlumni(p3)?' alm':''))+'" x="'+x3+'" y="'+(y3-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bn" x="'+(x3+8)+'" y="'+(y3-BH/2+15)+'">'+starOf(p3)+esc(p3.name)+'</text><text class="bkt" x="'+(x3+8)+'" y="'+(y3-BH/2+29)+'">3位</text></g>':'<g onclick="T.tbOpen('+jq(String(sec.id))+','+jq(t.no)+')"><rect class="bk empty" x="'+x3+'" y="'+(y3-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="8"/><text class="bq" x="'+(x3+8)+'" y="'+(y3+4)+'">3位 結果入力</text></g>');
   H=yb+ROWH/2+4}
  var hd=Object.keys(heads).map(function(c){return '<text class="bh" x="'+(colX(+c)+BW/2)+'" y="14">'+heads[c]+'</text>'}).join('');
  var Wd=colX(maxd+2)-GAP+4;
@@ -949,7 +966,7 @@ function pairRender(){
   var ps=(sec.players||[]).slice().sort(function(a,b){return (isMine(b)?1:0)-(isMine(a)?1:0)});
   var n=(PA?1:0)+(PB?1:0);
   h+='<div class="shh">この部の選手から2人を選ぶ（'+n+'/2・自道場は★）</div><div>';
-  ps.forEach(function(p){var key=sec.id+'|'+p.id,on=(PA&&PA.key===key)||(PB&&PB.key===key);h+=chp(p.name+(isMine(p)?' ★':''),on,"T.pp("+jq(sec.id)+","+jq(p.id)+")")});
+  ps.forEach(function(p){var key=sec.id+'|'+p.id,on=(PA&&PA.key===key)||(PB&&PB.key===key);h+=chp(p.name+starS(p),on,"T.pp("+jq(sec.id)+","+jq(p.id)+")")});
   h+='</div>'}
  bx.innerHTML=h;
 }
@@ -1022,7 +1039,7 @@ function matchRecs(){
   (sec.matches||[]).forEach(function(m){
   var r=rs(sec,m.no);if(!r||r.kind==='wo')return;var a=slot(sec,m.a),b=slot(sec,m.b),w=winner(sec,m.no),l=loser(sec,m.no);if(a==null||b==null||w==null||l==null)return;
   [[w,l,'勝'],[l,w,'負']].forEach(function(z){var p=sec.pp[z[0]],o=sec.pp[z[1]];if(!p||!o)return;
-   out.push({n:p.name,t:p.team||'',m:isMine(p)?1:0,o:o.name,ot:o.team||'',r:z[2],way:z[2]==='勝'?(r.way||''):'',tech:z[2]==='勝'?(r.tech||''):'',s:sec.name,e:e.name||'',d:e.date||'',x:m.third?'3位決定戦':(sec.format==='league'?'リーグ戦':(sec.format==='high'?'高点試合':''))})})})});
+   out.push({n:p.name,t:p.team||'',m:isMine(p)?1:(isAlumni(p)?2:0),o:o.name,ot:o.team||'',r:z[2],way:z[2]==='勝'?(r.way||''):'',tech:z[2]==='勝'?(r.tech||''):'',s:sec.name,e:e.name||'',d:e.date||'',x:m.third?'3位決定戦':(sec.format==='league'?'リーグ戦':(sec.format==='high'?'高点試合':''))})})})});
  return out;
 }
 function histCommit(){
@@ -1040,19 +1057,19 @@ function histRender(){
  ks.sort(function(a,b){return by[b].l.length-by[a].l.length});
  $('hist').innerHTML=ks.map(function(k){var o=by[k],w=o.l.filter(function(r){return r.r==='勝'}),tc={};w.forEach(function(r){var t=r.tech||r.way;if(t)tc[t]=(tc[t]||0)+1});
   var top=Object.keys(tc).sort(function(a,b){return tc[b]-tc[a]}).slice(0,3).map(function(t){return esc(t)+'×'+tc[t]}).join('、');
-  var lines=o.l.slice().sort(function(a,b){return String(b.d).localeCompare(String(a.d))}).map(function(r){return '<div class="sm" style="padding:2px 0">'+esc(r.d)+' '+esc(r.e)+'・'+esc(r.s)+(r.x?'・'+r.x:'')+'　<b>'+r.r+'</b> 対 '+esc(r.o)+(r.ot?'（'+esc(r.ot)+'）':'')+(r.r==='勝'&&(r.way||r.tech)?'　'+esc(r.way)+(r.tech?'／'+esc(r.tech):''):'')+'</div>'}).join('');
-  return '<details style="border-top:1px solid var(--bd);padding:6px 0"><summary style="cursor:pointer;font-size:15px">'+esc(o.n)+(o.t?'<span class="sm">（'+esc(o.t)+'）</span>':'')+'　<span class="sm">'+o.l.length+'戦'+w.length+'勝'+(o.l.length-w.length)+'敗'+(top?'　得意：'+top:'')+'</span></summary>'+lines+'</details>'}).join('')+'<div class="sm" style="margin-top:6px">不戦勝・欠場は戦績に数えていません。</div>';
+  var tset={};o.l.forEach(function(r){tset[r.t||'']=1});var multi=Object.keys(tset).length>1,alu=o.l.some(function(r){return r.m===2});var lines=o.l.slice().sort(function(a,b){return String(b.d).localeCompare(String(a.d))}).map(function(r){return '<div class="sm" style="padding:2px 0">'+esc(r.d)+' '+esc(r.e)+'・'+esc(r.s)+(r.x?'・'+r.x:'')+(multi&&r.t?'　〔'+esc(r.t)+'〕':'')+'　<b>'+r.r+'</b> 対 '+esc(r.o)+(r.ot?'（'+esc(r.ot)+'）':'')+(r.r==='勝'&&(r.way||r.tech)?'　'+esc(r.way)+(r.tech?'／'+esc(r.tech):''):'')+'</div>'}).join('');
+  return '<details style="border-top:1px solid var(--bd);padding:6px 0"><summary style="cursor:pointer;font-size:15px">'+esc(o.n)+(o.t?'<span class="sm">（'+esc(o.t)+'）</span>':'')+(alu?'<span class="tag">元道場生</span>':'')+'　<span class="sm">'+o.l.length+'戦'+w.length+'勝'+(o.l.length-w.length)+'敗'+(top?'　得意：'+top:'')+'</span></summary>'+lines+'</details>'}).join('')+'<div class="sm" style="margin-top:6px">不戦勝・欠場は戦績に数えていません。</div>';
 }
 function r2(){
  var yr=evYear()+RYOFF;$('ryr').textContent='令和'+(yr-2018)+'年度';
  if(!RO||!RO.members){$('roster').innerHTML='<div class="sm">名簿が読み込まれていません。上のボタンから読み込めます。</div>'}
  else{
   var diff=yr-(RO.base_year||yr),ms=RO.members.slice().sort(function(a,b){return (a.grade==null?99:a.grade)-(b.grade==null?99:b.grade)});
-  $('roster').innerHTML=ms.map(function(m){var lab=gradeLabel(m.grade,diff);return '<div class="dn"><span>'+esc(m.name)+'<span class="sm">&nbsp;'+(m.reading?esc(m.reading):'読み未入力')+'</span></span><span class="sm">'+(lab.indexOf('卒業')===0?'<span class="tag">'+lab+'</span>':lab)+'</span></div>'}).join('')+'<div class="sm" style="margin-top:8px">名簿の基準：令和'+((RO.base_year||yr)-2018)+'年度。幼児と卒業見込みは、あなたが更新してください。</div>';
+  $('roster').innerHTML=ms.map(function(m){var lab=gradeLabel(m.grade,diff);var af=affOf(m),ai=RO.members.indexOf(m);return '<div class="dn" style="flex-wrap:wrap"><span>'+esc(m.name)+'<span class="sm">&nbsp;'+(m.reading?esc(m.reading):'読み未入力')+'</span></span><span class="sm">'+(lab.indexOf('卒業')===0?'<span class="tag">'+lab+'</span>':lab)+'</span>'+(af.length?'<div class="sm" style="width:100%">所属履歴：'+af.map(function(a){return esc(a.team)+(a.from?'（'+esc(a.from)+'〜）':'')}).join(' → ')+'</div>':'')+'<div style="width:100%"><span class="chp" role="button" onclick="T.affAdd('+ai+')">所属を追加</span>'+(af.length?'<span class="chp" role="button" onclick="T.affClr('+ai+')">履歴を消す</span>':'')+'</div></div>'}).join('')+'<div class="sm" style="margin-top:8px">名簿の基準：令和'+((RO.base_year||yr)-2018)+'年度。幼児と卒業見込みは、あなたが更新してください。</div>';
  }
  var un=[];
  if(EV&&EV.sections){var seen={};mineItems().forEach(function(it){if(it.mk)return;var n=norm(it.p.name);if(seen[n])return;seen[n]=1;var inRo=RO&&RO.members&&RO.members.some(function(m){return norm(m.name)===n||(m.aliases||[]).some(function(a){return norm(a)===n})});if(!inRo)un.push(it.p.name+'（'+it.sec.name+'）')})}
- histRender();$('unreg').innerHTML=un.length?un.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span></div>'}).join(''):'<div class="sm">'+(EV?'ありません。':'大会データがありません。')+'</div>';
+ var cdi=$('clubdef');if(cdi&&document.activeElement!==cdi)cdi.value=sg('clubdef')||'';clashRender();histRender();$('unreg').innerHTML=un.length?un.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span></div>'}).join(''):'<div class="sm">'+(EV?'ありません。':'大会データがありません。')+'</div>';
 }
 
 /* ---------- データ画面 ---------- */
@@ -1068,7 +1085,7 @@ function r3(){
  var all=u.concat(extra);
  $('unk').innerHTML=all.length?all.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span><span class="tag">不明</span></div>'}).join(''):'<div class="sm">なし</div>';
  var un=ST.unit||'indiv';$('unI').className=un==='indiv'?'pri':'';$('unT').className=un==='team'?'pri':'';$('unB').className=un==='both'?'pri':'';$('unnote').textContent=un==='indiv'?'個人戦の試合方式は、下の区分のリストで区分ごとに選べます。':'団体戦の試合方式は、下の区分のリストで区分ごとに「団体戦」を選びます（人数・有効の設定もそこで行います）。';
- var npv=npOf();$('npn').textContent=npv+'部';$('npd').disabled=npv<=1;$('npi').disabled=npv>=6;$('npnote').textContent=npv>1?'区分の何部かは、下のリストで選びます。':'午前・午後など、時間を分けて行うときに増やします。';$('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('rdl').value=String(rdlGet());$('lcf').value=String(lcfGet());$('hlg').checked=hlGet();$('npl').checked=nplGet();$('nmd').value=nmdGet();$('lt').value=ST.lt||'on';$('bd').value=String(bdGet());$('rulenote').textContent=RN;ucRender();evListRender();
+ var npv=npOf();$('npn').textContent=npv+'部';$('npd').disabled=npv<=1;$('npi').disabled=npv>=6;$('npnote').textContent=npv>1?'区分の何部かは、下のリストで選びます。':'午前・午後など、時間を分けて行うときに増やします。';$('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('rdl').value=String(rdlGet());$('lcf').value=String(lcfGet());$('hlg').checked=hlGet();$('npl').checked=nplGet();$('nmd').value=nmdGet();$('lt').value=ST.lt||'on';$('bd').value=String(bdGet());$('rulenote').textContent=RN;ucRender();evListRender();clashRender();
  $('saveinfo').textContent=storeOK?'結果は、この端末の中に自動で保存されています。':'この環境では保存できません。結果を書き出して控えてください。';
 }
 
@@ -1098,7 +1115,7 @@ if(pa==null||pb==null){
   h+='<div class="sm" style="margin:10px 0">前の試合の結果が入っていません。勝ち上がった人を選ぶと、前の試合の勝ちも記録されます。</div>';
   [[m.a,pa],[m.b,pb]].forEach(function(z,i){
    h+='<div class="shh">'+(z[1]!=null?esc(pname(sec,z[1]))+'（確定）':'勝ち上がった人：'+esc(slotLabel(sec,z[0])))+'</div>';
-   if(z[1]==null&&z[0]&&z[0].winner_of!=null){h+='<div>';subPlayers(sec,z[0].winner_of).forEach(function(p){if(pstate(sec,p).out)return;h+=chp(pname(sec,p)+(isMine(sec.pp[p])?' ★':''),false,'T.shPick('+z[0].winner_of+','+jq(p)+')')});h+='</div>'}
+   if(z[1]==null&&z[0]&&z[0].winner_of!=null){h+='<div>';subPlayers(sec,z[0].winner_of).forEach(function(p){if(pstate(sec,p).out)return;h+=chp(pname(sec,p)+starS(sec.pp[p]),false,'T.shPick('+z[0].winner_of+','+jq(p)+')')});h+='</div>'}
   });
   $('shp').innerHTML=h;$('sheet').style.display='block';return}
  if(sec.team){tmRender(sec,SH.no,h);return}
@@ -1467,7 +1484,7 @@ window.T={
  pairApply:pairApply,pairWin:pairWin,pairClear:pairClear,
  gen:gen,copy:copy,
  ryear:function(d){RYOFF=d===0?0:RYOFF+d;r2()},
- loadEv:function(inp){readFile(inp,function(d){var e=validateEv(d);if(e){toast('大会JSONを読み込めません：'+e);return}var has=ST.as&&Object.keys(ST.as.m).length;if(has&&d.sections.some(function(x){return String(x.court)!=='未定'})&&confirm('いまの試合場の割り当てを、読み込むファイルの試合場で置き換えますか？\n「キャンセル」で今の割り当てを残します。')){ST.as.m={};ST.as.n=0}var ws=isSample(),b4=EV&&EV._tid;setEv(d);toast(b4&&EV._tid!==b4&&!ws?'大会データを読み込みました（前の大会は、保存してある大会に残しています）':'大会データを読み込みました')})},
+ loadEv:function(inp){readFile(inp,function(d){var e=validateEv(d);if(e){toast('大会JSONを読み込めません：'+e);return}var has=ST.as&&Object.keys(ST.as.m).length;if(has&&d.sections.some(function(x){return String(x.court)!=='未定'})&&confirm('いまの試合場の割り当てを、読み込むファイルの試合場で置き換えますか？\n「キャンセル」で今の割り当てを残します。')){ST.as.m={};ST.as.n=0}var ws=isSample(),b4=EV&&EV._tid;setEv(d);var ncl=nameClash().length;if(ncl){toast('同姓同名で所属が違う選手が'+ncl+'件あります（大会タブ・名簿タブで確認）');return}toast(b4&&EV._tid!==b4&&!ws?'大会データを読み込みました（前の大会は、保存してある大会に残しています）':'大会データを読み込みました')})},
  loadRo:function(inp){readFile(inp,function(d){if(!d||!Array.isArray(d.members)){toast('名簿JSONに「members」がありません');return}RO=d;ss('roster',RO);render();toast('名簿を読み込みました')})},
  sample:function(){setEv(sampleEv());RO=sampleRo();ss('roster',RO);render();T.tab(0);toast('サンプルを読み込みました（架空の名前です）')},
  dlSample:function(){download('tsugidare-sample-event.json',sampleEv())},
@@ -1483,6 +1500,9 @@ window.T={
  evSwitch:function(tid){var o=evsGet(),t=o[tid];if(!t||!t.ev||(EV&&tid===EV._tid))return;evPark();o=evsGet();t=o[tid];delete o[tid];ss('evs',o);
   ORIG={};EV=t.ev;ST=t.st||{};fixST();ST.ev=EV._tid=EV._tid||tid;HIST=[];SH=null;LASTREC=null;TB.s=null;NPC=null;RN='';ss('event',EV);ss('state',ST);if(t.mk)ss('marks',t.mk);
   index();pairClear();render();toast('「'+((EV.event&&EV.event.name)||'大会')+'」に切り替えました')},
+ clubDef:function(v){v=String(v||'').trim();if(v)ss('clubdef',v);else rm('clubdef');save();index();render();toast('自道場の名前を保存しました')},
+ affAdd:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i],t=prompt(m.name+'さんの新しい所属（学校名・道場名）を入れてください',''),f;if(t==null||!String(t).trim())return;f=prompt('いつから？（例：2026-04。分からなければ空のまま）','')||'';snap();m.affil=affOf(m).concat([{team:String(t).trim(),from:String(f).trim()}]);ss('roster',RO);index();render();toast('所属を追加しました')},
+ affClr:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i];if(!confirm(m.name+'さんの所属履歴を消します。よろしいですか？'))return;snap();delete m.affil;delete m.affiliations;ss('roster',RO);index();render()},
  evDel:function(tid){var o=evsGet(),t=o[tid];if(!t)return;if(!confirm('「'+evTitle(t.ev)+'」を、この端末から消します（蓄積した戦績は残ります）。よろしいですか？'))return;delete o[tid];ss('evs',o);render()},
  resetAll:function(){if(!confirm('大会データ・名簿・結果をすべてこの端末から消します。保存してある他の大会も消えます（蓄積した戦績は残ります）。よろしいですか？'))return;EV=null;RO=null;ST={};fixST();HIST=[];rm('event');rm('roster');rm('state');rm('evs');index();pairClear();render()}
 };
