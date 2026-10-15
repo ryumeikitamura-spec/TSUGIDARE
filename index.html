@@ -443,7 +443,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.13</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.14</div>
 </div>
 </div>
 
@@ -1050,14 +1050,14 @@ function histCommit(){
 function histAll(){return (sg('hist')||[]).reduce(function(a,x){return a.concat(x.recs||[])},[])}
 var HALL=false;
 function histRender(){
- var all=histAll(),by={},oset={};all.forEach(function(r){var mine=r.m!==0;if(!mine){oset[norm(r.n)+'|'+(r.t||'')]=1;if(!HALL)return}var k=mine?norm(r.n):norm(r.n)+'|'+(r.t||'');(by[k]=by[k]||{n:r.n,t:mine?'':(r.t||''),l:[]}).l.push(r)});
+ var all=histAll(),by={},oset={};all.forEach(function(r){var mine=r.m!==0;if(!mine){oset[norm(r.n)+'|'+(r.t||'')]=1;if(!HALL)return}var rmm=mine?roMatch(r.n):null,k=mine?(rmm?norm(rmm.name):norm(r.n)):norm(r.n)+'|'+(r.t||'');(by[k]=by[k]||{n:rmm?rmm.name:r.n,t:mine?'':(r.t||''),l:[]}).l.push(r)});
  var ob=$('hallbtn');if(ob){var on=Object.keys(oset).length;ob.style.display=on?'':'none';ob.textContent=HALL?'道場生だけ表示':'他の道場（'+on+'人）も表示'}
  var ks=Object.keys(by);
  if(!ks.length){$('hist').innerHTML='<div class="sm">まだ蓄積がありません。結果を入れると、自動でこの端末に貯まります（サンプル大会は貯めません）。</div>';return}
  ks.sort(function(a,b){return by[b].l.length-by[a].l.length});
  $('hist').innerHTML=ks.map(function(k){var o=by[k],w=o.l.filter(function(r){return r.r==='勝'}),tc={};w.forEach(function(r){var t=r.tech||r.way;if(t)tc[t]=(tc[t]||0)+1});
   var top=Object.keys(tc).sort(function(a,b){return tc[b]-tc[a]}).slice(0,3).map(function(t){return esc(t)+'×'+tc[t]}).join('、');
-  var tset={};o.l.forEach(function(r){tset[r.t||'']=1});var multi=Object.keys(tset).length>1,alu=o.l.some(function(r){return r.m===2});var lines=o.l.slice().sort(function(a,b){return String(b.d).localeCompare(String(a.d))}).map(function(r){return '<div class="sm" style="padding:2px 0">'+esc(r.d)+' '+esc(r.e)+'・'+esc(r.s)+(r.x?'・'+r.x:'')+(multi&&r.t?'　〔'+esc(r.t)+'〕':'')+'　<b>'+r.r+'</b> 対 '+esc(r.o)+(r.ot?'（'+esc(r.ot)+'）':'')+(r.r==='勝'&&(r.way||r.tech)?'　'+esc(r.way)+(r.tech?'／'+esc(r.tech):''):'')+'</div>'}).join('');
+  var tset={};o.l.forEach(function(r){tset[r.t||'']=1});var multi=Object.keys(tset).length>1,alu=o.l.some(function(r){return r.m===2});var lines=o.l.slice().sort(function(a,b){return String(b.d).localeCompare(String(a.d))}).map(function(r){return '<div class="sm" style="padding:2px 0">'+esc(r.d)+' '+esc(r.e)+'・'+esc(r.s)+(r.x?'・'+r.x:'')+(multi&&r.t?'　〔'+esc(r.t)+'〕':'')+(norm(r.n)!==norm(o.n)?'　（当時の名前：'+esc(r.n)+'）':'')+'　<b>'+r.r+'</b> 対 '+esc(r.o)+(r.ot?'（'+esc(r.ot)+'）':'')+(r.r==='勝'&&(r.way||r.tech)?'　'+esc(r.way)+(r.tech?'／'+esc(r.tech):''):'')+'</div>'}).join('');
   return '<details style="border-top:1px solid var(--bd);padding:6px 0"><summary style="cursor:pointer;font-size:15px">'+esc(o.n)+(o.t?'<span class="sm">（'+esc(o.t)+'）</span>':'')+(alu?'<span class="tag">元道場生</span>':'')+'　<span class="sm">'+o.l.length+'戦'+w.length+'勝'+(o.l.length-w.length)+'敗'+(top?'　得意：'+top:'')+'</span></summary>'+lines+'</details>'}).join('')+'<div class="sm" style="margin-top:6px">不戦勝・欠場は戦績に数えていません。</div>';
 }
 function r2(){
@@ -1065,7 +1065,7 @@ function r2(){
  if(!RO||!RO.members){$('roster').innerHTML='<div class="sm">名簿が読み込まれていません。上のボタンから読み込めます。</div>'}
  else{
   var diff=yr-(RO.base_year||yr),ms=RO.members.slice().sort(function(a,b){return (a.grade==null?99:a.grade)-(b.grade==null?99:b.grade)});
-  $('roster').innerHTML=ms.map(function(m){var lab=gradeLabel(m.grade,diff);var af=affOf(m),ai=RO.members.indexOf(m);return '<div class="dn" style="flex-wrap:wrap"><span>'+esc(m.name)+'<span class="sm">&nbsp;'+(m.reading?esc(m.reading):'読み未入力')+'</span></span><span class="sm">'+(lab.indexOf('卒業')===0?'<span class="tag">'+lab+'</span>':lab)+'</span>'+(af.length?'<div class="sm" style="width:100%">所属履歴：'+af.map(function(a){return esc(a.team)+(a.from?'（'+esc(a.from)+'〜）':'')}).join(' → ')+'</div>':'')+'<div style="width:100%"><span class="chp" role="button" onclick="T.affAdd('+ai+')">所属を追加</span>'+(af.length?'<span class="chp" role="button" onclick="T.affClr('+ai+')">履歴を消す</span>':'')+'</div></div>'}).join('')+'<div class="sm" style="margin-top:8px">名簿の基準：令和'+((RO.base_year||yr)-2018)+'年度。幼児と卒業見込みは、あなたが更新してください。</div>';
+  $('roster').innerHTML=ms.map(function(m){var lab=gradeLabel(m.grade,diff);var af=affOf(m),ai=RO.members.indexOf(m);return '<div class="dn" style="flex-wrap:wrap"><span>'+esc(m.name)+'<span class="sm">&nbsp;'+(m.reading?esc(m.reading):'読み未入力')+'</span></span><span class="sm">'+(lab.indexOf('卒業')===0?'<span class="tag">'+lab+'</span>':lab)+'</span>'+((m.aliases||[]).length?'<div class="sm" style="width:100%">別名：'+(m.aliases||[]).map(esc).join('、')+'</div>':'')+(af.length?'<div class="sm" style="width:100%">所属履歴：'+af.map(function(a){return esc(a.team)+(a.from?'（'+esc(a.from)+'〜）':'')}).join(' → ')+'</div>':'')+'<div style="width:100%"><span class="chp" role="button" onclick="T.affAdd('+ai+')">所属を追加</span><span class="chp" role="button" onclick="T.aliasAdd('+ai+')">別名を追加</span>'+((m.aliases||[]).length?'<span class="chp" role="button" onclick="T.aliasClr('+ai+')">別名を消す</span>':'')+(af.length?'<span class="chp" role="button" onclick="T.affClr('+ai+')">履歴を消す</span>':'')+'</div></div>'}).join('')+'<div class="sm" style="margin-top:8px">名簿の基準：令和'+((RO.base_year||yr)-2018)+'年度。幼児と卒業見込みは、あなたが更新してください。</div>';
  }
  var un=[];
  if(EV&&EV.sections){var seen={};mineItems().forEach(function(it){if(it.mk)return;var n=norm(it.p.name);if(seen[n])return;seen[n]=1;var inRo=RO&&RO.members&&RO.members.some(function(m){return norm(m.name)===n||(m.aliases||[]).some(function(a){return norm(a)===n})});if(!inRo)un.push(it.p.name+'（'+it.sec.name+'）')})}
@@ -1502,6 +1502,8 @@ window.T={
   index();pairClear();render();toast('「'+((EV.event&&EV.event.name)||'大会')+'」に切り替えました')},
  clubDef:function(v){v=String(v||'').trim();if(v)ss('clubdef',v);else rm('clubdef');save();index();render();toast('自道場の名前を保存しました')},
  affAdd:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i],t=prompt(m.name+'さんの新しい所属（学校名・道場名）を入れてください',''),f;if(t==null||!String(t).trim())return;f=prompt('いつから？（例：2026-04。分からなければ空のまま）','')||'';snap();m.affil=affOf(m).concat([{team:String(t).trim(),from:String(f).trim()}]);ss('roster',RO);index();render();toast('所属を追加しました')},
+ aliasAdd:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i],t=prompt(m.name+'さんの別名（旧姓・新姓など、大会で使われる名前）を入れてください\n例：見本 太郎',''),n;if(t==null||!String(t).trim())return;n=String(t).trim();var o=roMatch(n);if(o&&o!==m){toast('「'+n+'」は、名簿の別の人（'+o.name+'）の名前として入っています');return}snap();m.aliases=(m.aliases||[]).concat([n]);ss('roster',RO);index();render();toast('別名を追加しました')},
+ aliasClr:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i];if(!confirm(m.name+'さんの別名を消します。よろしいですか？'))return;snap();delete m.aliases;ss('roster',RO);index();render()},
  affClr:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i];if(!confirm(m.name+'さんの所属履歴を消します。よろしいですか？'))return;snap();delete m.affil;delete m.affiliations;ss('roster',RO);index();render()},
  evDel:function(tid){var o=evsGet(),t=o[tid];if(!t)return;if(!confirm('「'+evTitle(t.ev)+'」を、この端末から消します（蓄積した戦績は残ります）。よろしいですか？'))return;delete o[tid];ss('evs',o);render()},
  resetAll:function(){if(!confirm('大会データ・名簿・結果をすべてこの端末から消します。保存してある他の大会も消えます（蓄積した戦績は残ります）。よろしいですか？'))return;EV=null;RO=null;ST={};fixST();HIST=[];rm('event');rm('roster');rm('state');rm('evs');index();pairClear();render()}
