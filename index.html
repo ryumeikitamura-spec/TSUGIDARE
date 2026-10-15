@@ -119,7 +119,8 @@ details summary{list-style:none}details summary::-webkit-details-marker{display:
 .tmsc{display:flex;align-items:center;justify-content:center;gap:10px;margin:8px 0 4px}.tmsc b{font-size:14px;flex:1;text-align:center}.tmsc .n{font-size:30px;font-weight:800;white-space:nowrap}
 .tmcnt{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0;font-size:14px}.tmcnt .st{display:flex;align-items:center;gap:8px}.tmcnt .st button{width:40px;height:40px;padding:0}.tmcnt .st span{min-width:44px;text-align:center;font-weight:700}
 .tmed{background:var(--card);border-radius:16px;padding:12px;margin:10px 0}.tmed .nin{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tmed .nin input{margin:0}
-.tmed .chp:not(.on),#sheet .tmed .chp:not(.on){background:var(--in)}#sheet .tmed .shw button:not(.pri){background:var(--in);box-shadow:none}.tmbox{margin:2px 0 8px;padding:4px 10px 6px;background:var(--in);border-radius:12px}.tmbox .tmr{min-height:42px}.tmbox .sm{margin-top:4px}
+.tmed .chp:not(.on),#sheet .tmed .chp:not(.on){background:var(--in)}#sheet .tmed .shw button:not(.pri){background:var(--in);box-shadow:none}.evr{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--bd)}.evr:first-child{border-top:0}.evr .nm{flex:1;min-width:0;font-size:15px}.evr .nm b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.evr button.s{height:36px;padding:0 12px;font-size:13px}
+.tmbox{margin:2px 0 8px;padding:4px 10px 6px;background:var(--in);border-radius:12px}.tmbox .tmr{min-height:42px}.tmbox .sm{margin-top:4px}
 #sheet{position:fixed;inset:0;z-index:40;display:none}
 #sheet .shbg{position:absolute;inset:0;background:rgba(10,14,20,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 #sheet .shp{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--bg);border-radius:24px 24px 0 0;padding:22px 16px calc(14px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto;animation:up .22s ease-out}
@@ -378,6 +379,9 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="hd"><span>大会データ</span></div>
     <div id="evinfo" style="margin-bottom:8px"></div>
     <div class="row2"><label class="btn pri"><input type="file" accept=".json,application/json" hidden onchange="T.loadEv(this)">大会JSONを読み込む</label></div>
+    <div class="hd" style="margin-top:16px"><span>保存してある大会</span></div>
+    <div id="evlist"></div>
+    <div class="sm" style="margin-top:6px">別の大会JSONを読み込むと、いまの大会は結果ごとここに残ります。「切り替え」で、いつでも戻せます。</div>
     <div class="row2"><button onclick="T.sample()">サンプルで試す</button><button onclick="T.dlSample()">サンプルJSONを保存</button></div>
   </div>
   <div class="box" id="rulebox">
@@ -434,7 +438,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.11</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.12</div>
 </div>
 </div>
 
@@ -1064,7 +1068,7 @@ function r3(){
  var all=u.concat(extra);
  $('unk').innerHTML=all.length?all.map(function(s){return '<div class="dn"><span>'+esc(s)+'</span><span class="tag">不明</span></div>'}).join(''):'<div class="sm">なし</div>';
  var un=ST.unit||'indiv';$('unI').className=un==='indiv'?'pri':'';$('unT').className=un==='team'?'pri':'';$('unB').className=un==='both'?'pri':'';$('unnote').textContent=un==='indiv'?'個人戦の試合方式は、下の区分のリストで区分ごとに選べます。':'団体戦の試合方式は、下の区分のリストで区分ごとに「団体戦」を選びます（人数・有効の設定もそこで行います）。';
- var npv=npOf();$('npn').textContent=npv+'部';$('npd').disabled=npv<=1;$('npi').disabled=npv>=6;$('npnote').textContent=npv>1?'区分の何部かは、下のリストで選びます。':'午前・午後など、時間を分けて行うときに増やします。';$('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('rdl').value=String(rdlGet());$('lcf').value=String(lcfGet());$('hlg').checked=hlGet();$('npl').checked=nplGet();$('nmd').value=nmdGet();$('lt').value=ST.lt||'on';$('bd').value=String(bdGet());$('rulenote').textContent=RN;ucRender();
+ var npv=npOf();$('npn').textContent=npv+'部';$('npd').disabled=npv<=1;$('npi').disabled=npv>=6;$('npnote').textContent=npv>1?'区分の何部かは、下のリストで選びます。':'午前・午後など、時間を分けて行うときに増やします。';$('skip').checked=!!ST.skip;$('mt').value=String(ST.mt||0);$('rdl').value=String(rdlGet());$('lcf').value=String(lcfGet());$('hlg').checked=hlGet();$('npl').checked=nplGet();$('nmd').value=nmdGet();$('lt').value=ST.lt||'on';$('bd').value=String(bdGet());$('rulenote').textContent=RN;ucRender();evListRender();
  $('saveinfo').textContent=storeOK?'結果は、この端末の中に自動で保存されています。':'この環境では保存できません。結果を書き出して控えてください。';
 }
 
@@ -1292,10 +1296,20 @@ function validateEv(d){
  for(var i=0;i<d.sections.length;i++){var s=d.sections[i];if(s.id==null||s.court==null||!Array.isArray(s.players)||!Array.isArray(s.matches))return '部'+(i+1)+'に id・court・players・matches のどれかがありません'}
  return '';
 }
+function evsGet(){var o=sg('evs');return (o&&typeof o==='object'&&!Array.isArray(o))?o:{}}
+function evPark(){if(!EV||!EV._tid||isSample())return;var m=sg('marks'),o=evsGet();o[EV._tid]={ev:EV,st:ST,t:Date.now(),mk:(m&&m.ev===EV._tid)?m:null};ss('evs',o);if(!storeOK)toast('この端末に保存しきれませんでした。バックアップを書き出してください')}
+function evTitle(e){var x=(e&&e.event)||{};return (x.name||'名前のない大会')+(x.date?'（'+fmtDate(x.date)+'）':'')}
+function evListRender(){var el=$('evlist');if(!el)return;var o=evsGet(),ids=Object.keys(o).filter(function(k){return o[k]&&o[k].ev&&Array.isArray(o[k].ev.sections)}).sort(function(a,b){return String(((o[b].ev.event||{}).date)||'').localeCompare(String(((o[a].ev.event||{}).date)||''))||(o[b].t||0)-(o[a].t||0)}),h='';
+ function info(e,st){var n=Object.keys((st&&st.res)||{}).length,d=(e.event&&e.event.date)?fmtDate(e.event.date)+'・':'';return d+e.sections.length+'区分・結果'+n+'試合'}
+ if(EV&&EV.sections)h+='<div class="evr"><div class="nm"><b>'+esc((EV.event&&EV.event.name)||'名前のない大会')+'</b><div class="sm">'+esc(info(EV,ST))+'</div></div><span class="tag">いま</span></div>';
+ ids.forEach(function(k){var t=o[k];h+='<div class="evr"><div class="nm"><b>'+esc((t.ev.event&&t.ev.event.name)||'名前のない大会')+'</b><div class="sm">'+esc(info(t.ev,t.st))+'</div></div><button class="s" onclick="T.evSwitch(\''+esc(k)+'\')">切り替え</button><button class="s" onclick="T.evDel(\''+esc(k)+'\')" aria-label="削除">削除</button></div>'});
+ if(!h)h='<div class="sm">まだありません。</div>';else if(ids.length>=15)h+='<div class="sm" style="margin-top:6px">保存してある大会が多くなっています。古い大会は、バックアップに書き出してから削除してください。</div>';
+ el.innerHTML=h}
 function setEv(d){
- var key=((d.event&&d.event.name)||'')+'|'+((d.event&&d.event.date)||''),same=!!(EV&&EV._tid&&EV._src===key&&ST.ev===EV._tid),tid=same?EV._tid:newId();
+ var key=((d.event&&d.event.name)||'')+'|'+((d.event&&d.event.date)||''),same=!!(EV&&EV._tid&&EV._src===key&&ST.ev===EV._tid),tid=same?EV._tid:newId(),back=null;
+ if(!same){evPark();var ps=evsGet(),hit=null;Object.keys(ps).forEach(function(k){if(ps[k]&&ps[k].ev&&ps[k].ev._src===key)hit=k});if(hit){back=ps[hit];tid=hit;delete ps[hit];ss('evs',ps);if(back.mk)ss('marks',back.mk)}}
  ORIG={};d._tid=tid;d._src=key;EV=d;ss('event',EV);RN='';
- if(!same){HIST=[];ST={};fixST();ST.ev=tid;var pk=pickRules(d);if(pk){applyRules(pk.r);RN=pk.src==='hist'?'前回の同じ大会の設定を入れました。':'初期値の設定を入れました。'}}
+ if(!same){HIST=[];if(back&&back.st){ST=back.st;fixST();ST.ev=tid;RN='保存してあった同じ大会の結果を引き継ぎました。'}else{ST={};fixST();ST.ev=tid;var pk=pickRules(d);if(pk){applyRules(pk.r);RN=pk.src==='hist'?'前回の同じ大会の設定を入れました。':'初期値の設定を入れました。'}}}
  NPC=null;save();index();pairClear();render();
 }
 function readFile(inp,cb){var f=inp.files&&inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{cb(JSON.parse(r.result))}catch(e){toast('読み込めませんでした。JSONの形式を確認してください')}inp.value=''};r.readAsText(f)}
@@ -1453,19 +1467,24 @@ window.T={
  pairApply:pairApply,pairWin:pairWin,pairClear:pairClear,
  gen:gen,copy:copy,
  ryear:function(d){RYOFF=d===0?0:RYOFF+d;r2()},
- loadEv:function(inp){readFile(inp,function(d){var e=validateEv(d);if(e){toast('大会JSONを読み込めません：'+e);return}var has=ST.as&&Object.keys(ST.as.m).length;if(has&&d.sections.some(function(x){return String(x.court)!=='未定'})&&confirm('いまの試合場の割り当てを、読み込むファイルの試合場で置き換えますか？\n「キャンセル」で今の割り当てを残します。')){ST.as.m={};ST.as.n=0}setEv(d);toast('大会データを読み込みました')})},
+ loadEv:function(inp){readFile(inp,function(d){var e=validateEv(d);if(e){toast('大会JSONを読み込めません：'+e);return}var has=ST.as&&Object.keys(ST.as.m).length;if(has&&d.sections.some(function(x){return String(x.court)!=='未定'})&&confirm('いまの試合場の割り当てを、読み込むファイルの試合場で置き換えますか？\n「キャンセル」で今の割り当てを残します。')){ST.as.m={};ST.as.n=0}var ws=isSample(),b4=EV&&EV._tid;setEv(d);toast(b4&&EV._tid!==b4&&!ws?'大会データを読み込みました（前の大会は、保存してある大会に残しています）':'大会データを読み込みました')})},
  loadRo:function(inp){readFile(inp,function(d){if(!d||!Array.isArray(d.members)){toast('名簿JSONに「members」がありません');return}RO=d;ss('roster',RO);render();toast('名簿を読み込みました')})},
  sample:function(){setEv(sampleEv());RO=sampleRo();ss('roster',RO);render();T.tab(0);toast('サンプルを読み込みました（架空の名前です）')},
  dlSample:function(){download('tsugidare-sample-event.json',sampleEv())},
  setSkip:function(v){snap();ST.skip=!!v;save();render()},
- exp:function(){var d=new Date();download('tsugidare-results-'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'.json',{app:'tsugidare',version:3,state:ST,event:EV,roster:RO,hist:sg('hist')||[],marks:sg('marks'),rdef:sg('rdef'),rhist:sg('rhist'),appset:{hl:sg('hl'),npl:sg('npl'),lcf:sg('lcf'),rdl:sg('rdl'),uc:sg('uc'),bd:sg('bd')}})},
- imp:function(inp){readFile(inp,function(d){if(!d||d.app!=='tsugidare'||!d.state){toast('次だれ？のバックアップファイルではありません');return}snap();if(d.event&&validateEv(d.event)===''){if(!EV||confirm('バックアップの大会データ・名簿で、いまのものを置き換えますか？\n「キャンセル」で結果だけ復元します。')){ORIG={};EV=d.event;ss('event',EV);if(d.roster){RO=d.roster;ss('roster',RO)}}}
+ exp:function(){var d=new Date();download('tsugidare-results-'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'.json',{app:'tsugidare',version:3,state:ST,event:EV,roster:RO,hist:sg('hist')||[],evs:evsGet(),marks:sg('marks'),rdef:sg('rdef'),rhist:sg('rhist'),appset:{hl:sg('hl'),npl:sg('npl'),lcf:sg('lcf'),rdl:sg('rdl'),uc:sg('uc'),bd:sg('bd')}})},
+ imp:function(inp){readFile(inp,function(d){if(!d||d.app!=='tsugidare'||!d.state){toast('次だれ？のバックアップファイルではありません');return}snap();if(d.event&&validateEv(d.event)===''){if(!EV||confirm('バックアップの大会データ・名簿で、いまのものを置き換えますか？\n「キャンセル」で結果だけ復元します。')){if(EV&&EV._tid&&EV._tid!==d.event._tid)evPark();ORIG={};EV=d.event;ss('event',EV);if(d.event._tid){var pe=evsGet();delete pe[d.event._tid];ss('evs',pe)}if(d.roster){RO=d.roster;ss('roster',RO)}}}
   if(Array.isArray(d.hist)&&d.hist.length)ss('hist',d.hist);
   if(d.marks)ss('marks',d.marks);if(d.rdef)ss('rdef',d.rdef);if(d.rhist)ss('rhist',d.rhist);
   if(d.appset){Object.keys(d.appset).forEach(function(k){if(d.appset[k]!=null)ss(k,d.appset[k])});ucApply()}
+  if(d.evs&&typeof d.evs==='object'){var ce=evsGet();Object.keys(d.evs).forEach(function(k){if(!ce[k]&&!(EV&&EV._tid===k)&&d.evs[k]&&d.evs[k].ev)ce[k]=d.evs[k]});ss('evs',ce)}
   ST=d.state;fixST();NPC=null;migrate();save();index();pairClear();render();toast('復元しました')})},
  resetRes:function(){if(!confirm('勝ち負けと試合数の記録を消します。大会データと名簿は残ります。よろしいですか？'))return;snap();var ev=ST.ev,as=ST.as,rl=RULES();ST={};fixST();ST.ev=ev;ST.as=as;applyRules(rl);save();index();render()},
- resetAll:function(){if(!confirm('大会データ・名簿・結果をすべてこの端末から消します（蓄積した戦績は残ります）。よろしいですか？'))return;EV=null;RO=null;ST={};fixST();HIST=[];rm('event');rm('roster');rm('state');index();pairClear();render()}
+ evSwitch:function(tid){var o=evsGet(),t=o[tid];if(!t||!t.ev||(EV&&tid===EV._tid))return;evPark();o=evsGet();t=o[tid];delete o[tid];ss('evs',o);
+  ORIG={};EV=t.ev;ST=t.st||{};fixST();ST.ev=EV._tid=EV._tid||tid;HIST=[];SH=null;LASTREC=null;TB.s=null;NPC=null;RN='';ss('event',EV);ss('state',ST);if(t.mk)ss('marks',t.mk);
+  index();pairClear();render();toast('「'+((EV.event&&EV.event.name)||'大会')+'」に切り替えました')},
+ evDel:function(tid){var o=evsGet(),t=o[tid];if(!t)return;if(!confirm('「'+evTitle(t.ev)+'」を、この端末から消します（蓄積した戦績は残ります）。よろしいですか？'))return;delete o[tid];ss('evs',o);render()},
+ resetAll:function(){if(!confirm('大会データ・名簿・結果をすべてこの端末から消します。保存してある他の大会も消えます（蓄積した戦績は残ります）。よろしいですか？'))return;EV=null;RO=null;ST={};fixST();HIST=[];rm('event');rm('roster');rm('state');rm('evs');index();pairClear();render()}
 };
 
 $('asl').addEventListener('pointerdown',dragStart);
