@@ -8,6 +8,8 @@
 <meta name="theme-color" content="#f2f3f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1015" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>次だれ？</title>
 <style>
 :root{--bg:#f2f3f7;--card:#fff;--tx:#14171c;--sub:#667085;--bd:#e3e6ec;--acc:#2358d6;--acct:#fff;--r1b:#fdeaea;--r1t:#c0281d;--r2b:#fff1d0;--r2t:#8a5a00;--r3b:#e1f5ea;--r3t:#15803d;--in:#eceff4;--sh:0 1px 2px rgba(16,24,40,.05),0 6px 18px rgba(16,24,40,.06)}
@@ -443,7 +445,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.9.14</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.10.0</div>
 </div>
 </div>
 
@@ -1511,6 +1513,16 @@ window.T={
 
 $('asl').addEventListener('pointerdown',dragStart);
 index();render();
+})();
+</script>
+<script>
+(function(){
+  function msg(t){var e=document.getElementById('toast');if(!e)return;e.textContent=t;e.style.display='block';clearTimeout(msg.t);msg.t=setTimeout(function(){e.style.display='none'},4500)}
+  window.addEventListener('offline',function(){msg('電波がありません。記録はこの端末に保存されます')});
+  window.addEventListener('online',function(){msg('電波が戻りました')});
+  if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
+  navigator.serviceWorker.addEventListener('message',function(ev){if(ev.data==='updated')msg('新しい版を取得しました。アプリを開き直すと切り替わります')});
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
 })();
 </script>
 </body>

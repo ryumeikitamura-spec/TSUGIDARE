@@ -1,0 +1,6 @@
+{
+"name":"次だれ？","short_name":"次だれ？","lang":"ja",
+"start_url":"./index.html","scope":"./","display":"standalone",
+"background_color":"#f2f3f7","theme_color":"#f2f3f7",
+"icons":[{"src":"icon-180.png","sizes":"180x180","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]
+}
