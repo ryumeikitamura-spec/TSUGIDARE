@@ -123,6 +123,7 @@ details summary{list-style:none}details summary::-webkit-details-marker{display:
 .tmed{background:var(--card);border-radius:16px;padding:12px;margin:10px 0}.tmed .nin{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tmed .nin input{margin:0}
 .tmed .chp:not(.on),#sheet .tmed .chp:not(.on){background:var(--in)}#sheet .tmed .shw button:not(.pri){background:var(--in);box-shadow:none}.evr{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--bd)}.evr:first-child{border-top:0}.evr .nm{flex:1;min-width:0;font-size:15px}.evr .nm b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.evr button.s{height:36px;padding:0 12px;font-size:13px}
 .tmbox{margin:2px 0 8px;padding:4px 10px 6px;background:var(--in);border-radius:12px}.tmbox .tmr{min-height:42px}.tmbox .sm{margin-top:4px}
+#xsheet{position:fixed;inset:0;z-index:41;display:none}#xsheet .shbg{position:absolute;inset:0;background:rgba(10,14,20,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}#xsheet .shp{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--bg);border-radius:24px 24px 0 0;padding:22px 16px calc(14px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto;animation:up .22s ease-out}#xsheet .shp::before{content:"";position:absolute;top:8px;left:50%;width:40px;height:5px;margin-left:-20px;border-radius:3px;background:var(--bd)}#xsheet .chp:not(.on),#xsheet button.s,#xsheet button:not(.pri):not(.s){background:var(--card)}
 #sheet{position:fixed;inset:0;z-index:40;display:none}
 #sheet .shbg{position:absolute;inset:0;background:rgba(10,14,20,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 #sheet .shp{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--bg);border-radius:24px 24px 0 0;padding:22px 16px calc(14px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto;animation:up .22s ease-out}
@@ -445,7 +446,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.10.0</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.11.0</div>
 </div>
 </div>
 
@@ -458,6 +459,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
 </nav>
 <div class="toast" id="toast"></div>
 <div id="sheet"><div class="shbg" onclick="T.shClose()"></div><div class="shp" id="shp"></div></div>
+<div id="xsheet"><div class="shbg" onclick="T.xpClose()"></div><div class="shp" id="xshp"></div></div>
 
 <script>
 (function(){
@@ -839,7 +841,7 @@ function tbl(){
  if(TB.s==null||ord.indexOf(TB.s)<0)TB.s=ord[0];
  function op(x){return '<option value="'+esc(x.id)+'"'+(TB.s===String(x.id)?' selected':'')+'>'+(mine.indexOf(x)>=0?'★ ':'')+esc(x.name)+'（'+(x.players||[]).length+'人）</option>'}
  var ix=ord.indexOf(TB.s);
- pk.innerHTML='<div class="tbp"><select onchange="T.tbSec(this.value)" aria-label="部を選ぶ">'+(mine.length?'<optgroup label="自道場の選手がいる部">'+mine.map(op).join('')+'</optgroup>':'')+(oth.length?'<optgroup label="ほかの部">'+oth.map(op).join('')+'</optgroup>':'')+'</select></div><div class="tbm"><button onclick="T.tbStep(-1)" aria-label="前の部"'+(ix<=0?' disabled':'')+'>▲</button><button onclick="T.tbStep(1)" aria-label="次の部"'+(ix>=ord.length-1?' disabled':'')+'>▼</button>'+chp('結果入力',TB.mode!=='mk',"T.tbMode('in')")+chp('マーク',TB.mode==='mk',"T.tbMode('mk')")+'</div>';
+ pk.innerHTML='<div class="tbp"><select onchange="T.tbSec(this.value)" aria-label="部を選ぶ">'+(mine.length?'<optgroup label="自道場の選手がいる部">'+mine.map(op).join('')+'</optgroup>':'')+(oth.length?'<optgroup label="ほかの部">'+oth.map(op).join('')+'</optgroup>':'')+'</select></div><div class="tbm"><button onclick="T.tbStep(-1)" aria-label="前の部"'+(ix<=0?' disabled':'')+'>▲</button><button onclick="T.tbStep(1)" aria-label="次の部"'+(ix>=ord.length-1?' disabled':'')+'>▼</button>'+chp('結果入力',TB.mode!=='mk',"T.tbMode('in')")+chp('マーク',TB.mode==='mk',"T.tbMode('mk')")+'</div><div style="margin-top:8px"><button class="s" onclick="T.xpOpen()">画像・PDFで保存</button></div>';
  var sec=EV.sections.filter(function(x){return String(x.id)===TB.s})[0],fm=(sec.format==='league'||sec.format==='high')?sec.format:'tournament';
  bx.style.display='';
  $('tbw').innerHTML=fm==='league'?leagueTbl(sec):(fm==='high'?hiTbl(sec):bracketSvg(sec));
@@ -898,6 +900,130 @@ function bracketSvg(sec){
  var Wd=colX(maxd+2)-GAP+4;
  return '<svg width="'+Wd+'" height="'+H+'" viewBox="0 0 '+Wd+' '+H+'" role="img" aria-label="'+esc(sec.name)+'のトーナメント表">'+hd+lines.join('')+out.join('')+'</svg>';
 }
+
+/* ---------- 出力（画像・PDF） ---------- */
+var XP=null,XF={tournament:'トーナメント',league:'総当たり',high:'高点試合',team:'団体戦'};
+var XFONT='-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans CJK JP",sans-serif';
+var XCSS='text{font-family:'+XFONT+'}.xt{fill:#14171c}.xs{fill:#667085}.xb{font-weight:700}.xc{text-anchor:middle}.xw{fill:#15803d}.xl{fill:#c0281d}'
+ +'.xg{fill:none;stroke:#c9ced8;stroke-width:1}.xd{fill:#eceff4;stroke:#c9ced8;stroke-width:1}.xm{fill:#dbe5fb;stroke:#c9ced8;stroke-width:1}.xh{fill:#f2f3f7;stroke:#c9ced8;stroke-width:1}'
+ +'.bk{fill:#fff;stroke:#b4bbc8;stroke-width:1.2}.bk.alm{fill:#f1f5fd;stroke:#2358d6;stroke-width:1.5;stroke-dasharray:4 3}.bk.mine{fill:#dbe5fb;stroke:#2358d6;stroke-width:2}.bk.empty{fill:none;stroke-dasharray:4 3}'
+ +'.bq{font-size:11px;fill:#667085;opacity:.6}.bn{font-size:13px;font-weight:700;fill:#14171c}.bkt{font-size:10.5px;fill:#667085}.bl .bk,.bl .bn,.bl .bkt{opacity:.45}'
+ +'.bh{font-size:11px;font-weight:700;fill:#667085;text-anchor:middle}.bj{fill:none;stroke:#667085;stroke-width:1.5;opacity:.7}.bm{fill:#fff;stroke:#b4bbc8;stroke-width:1}.bmn{font-size:10.5px;font-weight:700;fill:#667085;text-anchor:middle}.bg{font-size:11px;fill:#667085}';
+function xw(s){var n=0;for(var i=0;i<s.length;i++)n+=s.charCodeAt(i)<256?0.55:1;return n}
+function xfit(s,size,maxW){return xw(s)*size>maxW?' textLength="'+Math.floor(maxW)+'" lengthAdjust="spacingAndGlyphs"':''}
+function xt(x,y,s,size,cls,extra){return '<text class="'+cls+'" x="'+x+'" y="'+y+'" font-size="'+size+'"'+(extra||'')+'>'+esc(s)+'</text>'}
+function xMsg(s){return {s:xt(0,14,s,12,'xs'),w:320,h:24,leg:''}}
+function xBracket(sec){
+ var s=bracketSvg(sec),m=s.match(/^<svg width="([\d.]+)" height="([\d.]+)"/);
+ if(!m)return xMsg('この部には試合のデータがありません');
+ s=s.replace(/ onclick="[^"]*"/g,'').replace(/ mk"/g,'"').replace(/<text class="bq"[^>]*>[^<]*<\/text>/g,'').replace(/^<svg /,'<svg x="0" y="0" ');
+ return {s:s,w:+m[1],h:+m[2],leg:'★＝自道場　☆＝元道場生　丸の数字＝試合の順番'};
+}
+function xLeague(sec){
+ var ps=sec.players||[];if(ps.length<2)return xMsg('この部は選手が1人のため、試合がありません');
+ var S=lgStand(sec),mm={},NW=156,C=42,RH=34,HH=30,W=NW+C*2+C*ps.length,H=HH+RH*ps.length,g='';
+ (sec.matches||[]).forEach(function(m){var a=slot(sec,m.a),b=slot(sec,m.b);if(a!=null&&b!=null){mm[a+'|'+b]=m.no;mm[b+'|'+a]=m.no}});
+ g+='<rect class="xh" x="0" y="0" width="'+NW+'" height="'+HH+'"/>';
+ ['順位','勝'].forEach(function(t,k){g+='<rect class="xh" x="'+(NW+C*k)+'" y="0" width="'+C+'" height="'+HH+'"/>'+xt(NW+C*k+C/2,19,t,12,'xs xb xc')});
+ ps.forEach(function(p,j){g+='<rect class="xh" x="'+(NW+C*2+C*j)+'" y="0" width="'+C+'" height="'+HH+'"/>'+xt(NW+C*2+C*j+C/2,19,String(j+1),12,'xs xb xc')});
+ ps.forEach(function(p,i){var x=S.st[p.id],y=HH+i*RH,mine=isMine(p),po=!!ST.out[sec.id+'|'+p.id],nm=(i+1)+'　'+starOf(p)+p.name;
+  g+='<rect class="'+(mine?'xm':'xg')+'" x="0" y="'+y+'" width="'+NW+'" height="'+RH+'"/>'+xt(8,y+22,nm,13,'xt xb',xfit(nm,13,NW-14));
+  g+='<rect class="xg" x="'+NW+'" y="'+y+'" width="'+C+'" height="'+RH+'"/>'+xt(NW+C/2,y+22,(x.w+x.l)?x.rank+(x.tie?'＊':''):'–',13,(S.left?'xs':'xt')+' xb xc');
+  g+='<rect class="xg" x="'+(NW+C)+'" y="'+y+'" width="'+C+'" height="'+RH+'"/>'+xt(NW+C+C/2,y+22,String(x.w),13,'xt xb xc');
+  ps.forEach(function(q,j){var cx=NW+C*2+C*j;
+   if(i===j){g+='<rect class="xd" x="'+cx+'" y="'+y+'" width="'+C+'" height="'+RH+'"/>';return}
+   g+='<rect class="xg" x="'+cx+'" y="'+y+'" width="'+C+'" height="'+RH+'"/>';
+   var no=mm[p.id+'|'+q.id],r=no!=null?rs(sec,no):null,w=r?winner(sec,no):null,qo=!!ST.out[sec.id+'|'+q.id],c='',ft=false;
+   if(r&&w!=null){c=w===p.id?'w':'l';ft=r.kind==='wo'}else if(!r&&(po!==qo)){c=qo?'w':'l';ft=true}
+   if(c)g+=xt(cx+C/2,y+23,c==='w'?'○':'●',18,(c==='w'?'xw':'xl')+' xc');
+   if(c&&ft)g+=xt(cx+C-9,y+11,'不',9,'xs xc')})});
+ return {s:g,w:W,h:H,leg:'○＝勝ち　●＝負け　不＝不戦　順位は勝ち数、同じなら直接対決で決めています（＊は同率、薄い字は暫定）　★＝自道場'};
+}
+function xHigh(sec){
+ var h=HI[sec.id]||{wins:{},ach:{},N:3},ps=sec.players||[];if(ps.length<2)return xMsg('この部は選手が1人のため、試合がありません');
+ var idx={},mk={},ms=(sec.matches||[]).slice().sort(function(x,y){return x.no-y.no}),RH=32,g='',y=0,mx=0,win=[];
+ ps.forEach(function(p,i){idx[p.id]=i;mk[p.id]=[]});
+ ms.forEach(function(m){var a=slot(sec,m.a),b=slot(sec,m.b);if(a==null||b==null||idx[a]==null||idx[b]==null)return;var r=rs(sec,m.no);if(!r)return;
+  var w=winner(sec,m.no);if(r.d){mk[a].push('d');mk[b].push('d')}else{mk[a].push(w===a?'w':'l');mk[b].push(w===b?'w':'l')}});
+ ps.forEach(function(p){if(mk[p.id].length>mx)mx=mk[p.id].length;if(h.ach[p.id])win.push(starOf(p)+p.name)});
+ var W=Math.max(380,360+18*mx+10);
+ if(win.length){g+=xt(0,14,h.N+'人抜き達成：'+win.join('、'),12,'xt xb',xfit(h.N+'人抜き達成：'+win.join('、'),12,W));y+=26}
+ ps.forEach(function(p,i){var yy=y+i*RH,s0=pstate(sec,p.id),t=s0.wd?'欠場':(s0.none?'':(h.ach[p.id]?h.N+'人抜き達成':hiLabel(sec,p.id))),nm=starOf(p)+p.name;
+  g+='<rect class="'+(isMine(p)?'xm':'xg')+'" x="0" y="'+yy+'" width="'+W+'" height="'+RH+'"/>'+xt(8,yy+21,String(i+1),12,'xs xb')+xt(30,yy+21,nm,13,'xt xb',xfit(nm,13,150))+xt(190,yy+21,t,12,'xs',xfit(t,12,160));
+  mk[p.id].forEach(function(k,j){g+=xt(360+j*18,yy+22,k==='w'?'○':(k==='l'?'●':'△'),15,k==='w'?'xw':(k==='l'?'xl':'xs'))})});
+ return {s:g,w:W,h:y+RH*ps.length,leg:'○＝勝ち　●＝負け　△＝引き分け　右の印は、その人の結果を試合の順に並べています　★＝自道場'};
+}
+function xList(sec,W){
+ var f=fmOf(sec),ms=(sec.matches||[]).slice().sort(function(a,b){var x=rank(sec,a.no),y=rank(sec,b.no);return (x==null?9999:x)-(y==null?9999:y)||a.no-b.no}),g=xt(0,14,'試合の結果',13,'xs xb'),y=26,n=0;
+ ms.forEach(function(m){var rt=resText(sec,m.no);if(!rt)return;n++;
+  var rk=rank(sec,m.no),t=(rk!=null?'第'+rk+'試合':'別会場')+((f==='tournament'||f==='team')?(m.third?'（3位決定戦）':(sec.par&&sec.par[m.no]==null?'（決勝）':'')):''),l1=t+'　'+slotLabel(sec,m.a)+'　対　'+slotLabel(sec,m.b);
+  g+=xt(0,y+13,l1,12,'xt',xfit(l1,12,W))+xt(14,y+30,'→ '+rt,12,'xs',xfit('→ '+rt,12,W-14));y+=42});
+ if(!n){g+=xt(0,y+13,'結果はまだ入っていません',12,'xs');y+=24}
+ return {s:g,h:y};
+}
+function xPage(sec){
+ var f=fmOf(sec),e=(EV&&EV.event)||{},b=f==='league'?xLeague(sec):(f==='high'?xHigh(sec):xBracket(sec)),W=Math.max(b.w,440)+40,L=xList(sec,W-40),y=20,g='',d=new Date();
+ var tt=e.name||'名前のない大会',sub=(e.date?fmtDate(e.date)+'　':'')+sec.name+'　（'+XF[f]+'・'+(sec.players||[]).length+(f==='team'?'チーム':'人')+'）';
+ g+=xt(20,y+16,tt,19,'xt xb',xfit(tt,19,W-40));y+=28;
+ g+=xt(20,y+14,sub,14,'xt',xfit(sub,14,W-40));y+=22;
+ if(b.leg){g+=xt(20,y+12,b.leg,10.5,'xs',xfit(b.leg,10.5,W-40));y+=20}
+ y+=8;g+='<g transform="translate(20,'+y+')">'+b.s+'</g>';y+=b.h+22;
+ g+='<g transform="translate(20,'+y+')">'+L.s+'</g>';y+=L.h+6;
+ var ft='次だれ？で作成　'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+ g+=xt(20,y+14,ft,10,'xs');var H=y+28;
+ return {w:W,h:H,name:sec.name,svg:'<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><style>'+XCSS+'</style><rect width="'+W+'" height="'+H+'" fill="#fff"/>'+g+'</svg>'};
+}
+function xRaster(pg,cb){
+ var s=Math.min(2,Math.sqrt(16000000/(pg.w*pg.h)),8000/pg.h,8000/pg.w),cw=Math.round(pg.w*s),ch=Math.round(pg.h*s),img=new Image();
+ img.onload=function(){try{var c=document.createElement('canvas');c.width=cw;c.height=ch;var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cw,ch);x.drawImage(img,0,0,cw,ch);cb(c)}catch(e){cb(null)}};
+ img.onerror=function(){cb(null)};
+ img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(pg.svg);
+}
+function xPdf(pgs){
+ var chunks=[],pos=0,offs=[],n=pgs.length,i;
+ function w(s){var b;if(typeof s==='string'){b=new Uint8Array(s.length);for(var k=0;k<s.length;k++)b[k]=s.charCodeAt(k)&255}else b=s;chunks.push(b);pos+=b.length}
+ function ob(k){offs[k]=pos;w(k+' 0 obj\n')}
+ w('%PDF-1.4\n');ob(1);w('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+ var kids=[];for(i=0;i<n;i++)kids.push((3+3*i)+' 0 R');
+ ob(2);w('<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+n+' >>\nendobj\n');
+ pgs.forEach(function(p,i){var a=3+3*i,c=a+1,im=a+2,cont='q '+p.pw+' 0 0 '+p.ph+' 0 0 cm /Im0 Do Q';
+  ob(a);w('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+p.pw+' '+p.ph+'] /Resources << /XObject << /Im0 '+im+' 0 R >> >> /Contents '+c+' 0 R >>\nendobj\n');
+  ob(c);w('<< /Length '+cont.length+' >>\nstream\n'+cont+'\nendstream\nendobj\n');
+  ob(im);w('<< /Type /XObject /Subtype /Image /Width '+p.iw+' /Height '+p.ih+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.bytes.length+' >>\nstream\n');w(p.bytes);w('\nendstream\nendobj\n')});
+ var total=2+3*n,xs=pos;w('xref\n0 '+(total+1)+'\n0000000000 65535 f \n');
+ for(var k=1;k<=total;k++){var o=String(offs[k]);while(o.length<10)o='0'+o;w(o+' 00000 n \n')}
+ w('trailer\n<< /Size '+(total+1)+' /Root 1 0 R >>\nstartxref\n'+xs+'\n%%EOF\n');
+ return new Blob(chunks,{type:'application/pdf'});
+}
+function xName(s){return String(s||'').replace(/[\\\/:*?"<>|\s]+/g,'_').slice(0,40)||'hyo'}
+function xStamp(){var d=new Date();return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)}
+function xpClear(){if(XP&&XP.out)XP.out.files.forEach(function(f){try{URL.revokeObjectURL(f.url)}catch(e){}});if(XP)XP.out=null}
+function xpOrder(){var mine=[],oth=[];((EV&&EV.sections)||[]).forEach(function(x){((x.players||[]).some(isMine)?mine:oth).push(x)});return mine.concat(oth)}
+function xpRender(){
+ var el=$('xsheet');if(!XP){el.style.display='none';return}
+ var secs=XP.secs,h='<div class="hd"><span>表を画像・PDFで保存</span><button class="s" onclick="T.xpClose()">閉じる</button></div>';
+ if(XP.busy){h+='<div class="sm" style="margin:14px 0">作っています…（'+XP.prog+' / '+XP.total+'）</div>'}
+ else if(XP.out){
+  var o=XP.out;
+  h+='<div class="sm" style="margin:10px 0">'+(o.files.length)+'つのファイルができました。「共有・保存」を押すと、写真に保存・ファイルに保存・LINEなどへ送れます。</div>';
+  h+='<div style="margin:12px 0"><button class="pri" style="width:100%" onclick="T.xpShare()">共有・保存</button></div>';
+  if(XP.fmt==='png'){o.files.forEach(function(f){h+='<div class="shh">'+esc(f.label)+'</div><img src="'+f.url+'" style="width:100%;border-radius:10px;border:1px solid var(--bd);background:#fff" alt="">'});
+   h+='<div class="sm" style="margin-top:10px">「共有・保存」がうまくいかないときは、上の画像を長押しして保存してください。</div>'}
+  else{o.files.forEach(function(f){h+='<div class="shh">'+esc(f.label)+'</div><a href="'+f.url+'" target="_blank" rel="noopener" style="color:var(--acc);font-weight:700">PDFを開く</a>'});
+   h+='<div class="sm" style="margin-top:10px">「共有・保存」がうまくいかないときは、「PDFを開く」から開いて保存してください。</div>'}
+  h+='<div style="margin-top:14px"><button onclick="T.xpBack()">選びなおす</button></div>';
+ }else{
+  var cnt=secs.filter(function(x){return XP.sel[x.id]}).length;
+  h+='<div class="shh">保存する部（タップで選びます）</div><div>'+chp('自道場の部だけ',false,"T.xpPick('mine')")+chp('全部',false,"T.xpPick('all')")+chp('全部外す',false,"T.xpPick('none')")+'</div><div style="margin-top:8px">';
+  secs.forEach(function(x,i){h+=chp(((x.players||[]).some(isMine)?'★ ':'')+x.name+'（'+(x.players||[]).length+'人）',!!XP.sel[x.id],'T.xpTog('+i+')')});
+  h+='</div><div class="shh">形式</div><div>'+chp('画像（PNG）',XP.fmt==='png',"T.xpFmt('png')")+chp('PDF',XP.fmt==='pdf',"T.xpFmt('pdf')")+'</div>';
+  h+='<div class="sm" style="margin-top:6px">'+(XP.fmt==='png'?'1つの部が1枚の画像になります。':'選んだ部をまとめた1つのPDFになります（1つの部が1ページ）。')+'</div>';
+  h+='<div style="margin:16px 0 4px"><button class="pri" style="width:100%"'+(cnt?'':' disabled')+' onclick="T.xpGo()">'+(cnt?cnt+'つの部を作る':'部を選んでください')+'</button></div>';
+  if(XP.err)h+='<div class="sm" style="color:var(--r1t)">'+esc(XP.err)+'</div>';
+ }
+ $('xshp').innerHTML=h;el.style.display='block';
+}
+var XFMT='png';
 
 /* ---------- 進行画面 ---------- */
 function r0(){
@@ -1504,6 +1630,37 @@ window.T={
   index();pairClear();render();toast('「'+((EV.event&&EV.event.name)||'大会')+'」に切り替えました')},
  clubDef:function(v){v=String(v||'').trim();if(v)ss('clubdef',v);else rm('clubdef');save();index();render();toast('自道場の名前を保存しました')},
  affAdd:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i],t=prompt(m.name+'さんの新しい所属（学校名・道場名）を入れてください',''),f;if(t==null||!String(t).trim())return;f=prompt('いつから？（例：2026-04。分からなければ空のまま）','')||'';snap();m.affil=affOf(m).concat([{team:String(t).trim(),from:String(f).trim()}]);ss('roster',RO);index();render();toast('所属を追加しました')},
+ xpOpen:function(){if(!EV||!EV.sections||!EV.sections.length)return;var secs=xpOrder(),sel={};secs.forEach(function(x){if((x.players||[]).some(isMine))sel[x.id]=1});if(!Object.keys(sel).length&&TB.s!=null)sel[TB.s]=1;xpClear();XP={secs:secs,sel:sel,fmt:XFMT,busy:false,out:null,err:''};xpRender()},
+ xpClose:function(){xpClear();XP=null;xpRender()},
+ xpTog:function(i){if(!XP||XP.busy)return;var x=XP.secs[i];if(!x)return;if(XP.sel[x.id])delete XP.sel[x.id];else XP.sel[x.id]=1;xpRender()},
+ xpPick:function(k){if(!XP||XP.busy)return;XP.sel={};XP.secs.forEach(function(x){if(k==='all'||(k==='mine'&&(x.players||[]).some(isMine)))XP.sel[x.id]=1});xpRender()},
+ xpFmt:function(f){if(!XP||XP.busy)return;XP.fmt=XFMT=f;xpRender()},
+ xpBack:function(){if(!XP)return;xpClear();XP.err='';xpRender()},
+ xpGo:function(){
+  if(!XP||XP.busy)return;var secs=XP.secs.filter(function(x){return XP.sel[x.id]});if(!secs.length)return;
+  xpClear();XP.busy=true;XP.err='';XP.prog=0;XP.total=secs.length;xpRender();
+  var files=[],pdfp=[],i=0,fmt=XP.fmt,self=XP;
+  function fail(m){if(XP!==self)return;XP.busy=false;XP.err=m||'作れませんでした。もう一度お試しください。';xpRender()}
+  function next(){
+   if(XP!==self)return;
+   if(i>=secs.length){
+    if(fmt==='pdf'){try{var b=xPdf(pdfp);files=[{name:'tsugidare-hyo-'+xStamp()+'.pdf',type:'application/pdf',blob:b,url:URL.createObjectURL(b),label:pdfp.length+'ページのPDF'}]}catch(e){return fail()}}
+    XP.out={files:files};XP.busy=false;xpRender();return}
+   var pg,sec=secs[i];try{pg=xPage(sec)}catch(e){return fail('「'+sec.name+'」を作れませんでした。')}
+   xRaster(pg,function(c){
+    if(XP!==self)return;if(!c)return fail('「'+sec.name+'」を画像にできませんでした。');
+    function step(){i++;XP.prog=i;xpRender();setTimeout(next,0)}
+    if(fmt==='png'){c.toBlob(function(b){if(!b)return fail();files.push({name:'tsugidare-'+(i+1)+'-'+xName(sec.name)+'.png',type:'image/png',blob:b,url:URL.createObjectURL(b),label:sec.name});step()},'image/png')}
+    else{try{var d=c.toDataURL('image/jpeg',0.92),bin=atob(d.split(',')[1]),by=new Uint8Array(bin.length),k,pw,ph;for(k=0;k<bin.length;k++)by[k]=bin.charCodeAt(k);
+      pw=595;ph=pw*pg.h/pg.w;if(ph>14000){pw=pw*14000/ph;ph=14000}
+      pdfp.push({bytes:by,iw:c.width,ih:c.height,pw:pw.toFixed(2),ph:ph.toFixed(2)})}catch(e){return fail()}step()}
+   })}
+  setTimeout(next,30)},
+ xpShare:function(){
+  var o=XP&&XP.out;if(!o)return;var fs=null;
+  try{fs=o.files.map(function(f){return new File([f.blob],f.name,{type:f.type})})}catch(e){}
+  if(fs&&navigator.canShare&&navigator.canShare({files:fs})){navigator.share({files:fs,title:'次だれ？'}).catch(function(e){if(!e||e.name!=='AbortError')toast('共有できませんでした。画像を長押し、またはファイルを開いて保存してください')});return}
+  o.files.forEach(function(f,k){setTimeout(function(){var a=document.createElement('a');a.href=f.url;a.download=f.name;document.body.appendChild(a);a.click();document.body.removeChild(a)},k*400)});toast('ダウンロードしました。保存先をご確認ください')},
  aliasAdd:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i],t=prompt(m.name+'さんの別名（旧姓・新姓など、大会で使われる名前）を入れてください\n例：見本 太郎',''),n;if(t==null||!String(t).trim())return;n=String(t).trim();var o=roMatch(n);if(o&&o!==m){toast('「'+n+'」は、名簿の別の人（'+o.name+'）の名前として入っています');return}snap();m.aliases=(m.aliases||[]).concat([n]);ss('roster',RO);index();render();toast('別名を追加しました')},
  aliasClr:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i];if(!confirm(m.name+'さんの別名を消します。よろしいですか？'))return;snap();delete m.aliases;ss('roster',RO);index();render()},
  affClr:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i];if(!confirm(m.name+'さんの所属履歴を消します。よろしいですか？'))return;snap();delete m.affil;delete m.affiliations;ss('roster',RO);index();render()},
