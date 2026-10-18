@@ -36,7 +36,7 @@ input[type=text],input[type=number],textarea,select{font:inherit;font-size:16px;
 input[type=text],textarea{width:100%;background:var(--in);border:0;border-radius:12px;padding:12px 14px;margin:0 0 8px;outline:none}
 input[type=text]:focus,textarea:focus,.fl2 input:focus{box-shadow:0 0 0 2px var(--acc)}
 textarea{min-height:220px;line-height:1.75}
-.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:color-mix(in srgb,var(--card) 90%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(16px);backdrop-filter:saturate(1.6) blur(16px);border-top:1px solid var(--bd);padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:10}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);-webkit-backface-visibility:hidden;backface-visibility:hidden;border-top:1px solid var(--bd);padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:10}
 .tabs button{flex:1;border:0;border-radius:12px;height:54px;background:transparent;color:var(--sub);font-size:10.5px;font-weight:600;flex-direction:column;gap:3px;padding:0;white-space:nowrap;letter-spacing:.01em}
 .tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .tabs button.on{color:var(--acc)}
@@ -446,7 +446,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.11.0</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.11.1</div>
 </div>
 </div>
 
