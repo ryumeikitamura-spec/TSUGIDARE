@@ -447,7 +447,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.11.2</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.11.3</div>
 </div>
 </div>
 
@@ -963,14 +963,15 @@ function xList(sec,W){
  if(!n){g+=xt(0,y+13,'結果はまだ入っていません',12,'xs');y+=24}
  return {s:g,h:y};
 }
-function xPage(sec){
- var f=fmOf(sec),e=(EV&&EV.event)||{},b=f==='league'?xLeague(sec):(f==='high'?xHigh(sec):xBracket(sec)),W=Math.max(b.w,440)+40,L=xList(sec,W-40),y=20,g='',d=new Date();
+function xPage(sec,inc){
+ inc=inc||{tbl:true,list:false};
+ var f=fmOf(sec),e=(EV&&EV.event)||{},b=inc.tbl?(f==='league'?xLeague(sec):(f==='high'?xHigh(sec):xBracket(sec))):{s:'',w:0,h:0,leg:''},W=Math.max(b.w,440)+40,L=inc.list?xList(sec,W-40):{s:'',h:0},y=20,g='',d=new Date();
  var tt=e.name||'名前のない大会',sub=(e.date?fmtDate(e.date)+'　':'')+sec.name+'　（'+XF[f]+'・'+(sec.players||[]).length+(f==='team'?'チーム':'人')+'）';
  g+=xt(20,y+16,tt,19,'xt xb',xfit(tt,19,W-40));y+=28;
  g+=xt(20,y+14,sub,14,'xt',xfit(sub,14,W-40));y+=22;
  if(b.leg){g+=xt(20,y+12,b.leg,10.5,'xs',xfit(b.leg,10.5,W-40));y+=20}
- y+=8;g+='<g transform="translate(20,'+y+')">'+b.s+'</g>';y+=b.h+22;
- g+='<g transform="translate(20,'+y+')">'+L.s+'</g>';y+=L.h+6;
+ y+=8;if(inc.tbl){g+='<g transform="translate(20,'+y+')">'+b.s+'</g>';y+=b.h+22}
+ if(inc.list){g+='<g transform="translate(20,'+y+')">'+L.s+'</g>';y+=L.h+6}else y-=8;
  var ft='次だれ？で作成　'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
  g+=xt(20,y+14,ft,10,'xs');var H=y+28;
  return {w:W,h:H,name:sec.name,svg:'<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><style>'+XCSS+'</style><rect width="'+W+'" height="'+H+'" fill="#fff"/>'+g+'</svg>'};
@@ -1018,14 +1019,14 @@ function xpRender(){
   var cnt=secs.filter(function(x){return XP.sel[x.id]}).length;
   h+='<div class="shh">保存する部（タップで選びます）</div><div>'+chp('自道場の部だけ',false,"T.xpPick('mine')")+chp('全部',false,"T.xpPick('all')")+chp('全部外す',false,"T.xpPick('none')")+'</div><div style="margin-top:8px">';
   secs.forEach(function(x,i){h+=chp(((x.players||[]).some(isMine)?'★ ':'')+x.name+'（'+(x.players||[]).length+'人）',!!XP.sel[x.id],'T.xpTog('+i+')')});
-  h+='</div><div class="shh">形式</div><div>'+chp('画像（PNG）',XP.fmt==='png',"T.xpFmt('png')")+chp('PDF',XP.fmt==='pdf',"T.xpFmt('pdf')")+'</div>';
+  h+='</div><div class="shh">載せるもの</div><div>'+chp('トーナメント表など',XP.inc.tbl,"T.xpInc('tbl')")+chp('試合の結果の一覧',XP.inc.list,"T.xpInc('list')")+'</div><div class="sm" style="margin-top:6px">表は、方式に合わせた勝ち上がりの表です（総当たり・高点試合は、その方式の表）。</div><div class="shh">形式</div><div>'+chp('画像（PNG）',XP.fmt==='png',"T.xpFmt('png')")+chp('PDF',XP.fmt==='pdf',"T.xpFmt('pdf')")+'</div>';
   h+='<div class="sm" style="margin-top:6px">'+(XP.fmt==='png'?'1つの部が1枚の画像になります。':'選んだ部をまとめた1つのPDFになります（1つの部が1ページ）。')+'</div>';
   h+='<div style="margin:16px 0 4px"><button class="pri" style="width:100%"'+(cnt?'':' disabled')+' onclick="T.xpGo()">'+(cnt?cnt+'つの部を作る':'部を選んでください')+'</button></div>';
   if(XP.err)h+='<div class="sm" style="color:var(--r1t)">'+esc(XP.err)+'</div>';
  }
  $('xshp').innerHTML=h;el.style.display='block';
 }
-var XFMT='png';
+var XFMT='png',XINC={tbl:true,list:false};
 
 /* ---------- 進行画面 ---------- */
 function r0(){
@@ -1633,11 +1634,12 @@ window.T={
   index();pairClear();render();toast('「'+((EV.event&&EV.event.name)||'大会')+'」に切り替えました')},
  clubDef:function(v){v=String(v||'').trim();if(v)ss('clubdef',v);else rm('clubdef');save();index();render();toast('自道場の名前を保存しました')},
  affAdd:function(i){if(!RO||!RO.members||!RO.members[i])return;var m=RO.members[i],t=prompt(m.name+'さんの新しい所属（学校名・道場名）を入れてください',''),f;if(t==null||!String(t).trim())return;f=prompt('いつから？（例：2026-04。分からなければ空のまま）','')||'';snap();m.affil=affOf(m).concat([{team:String(t).trim(),from:String(f).trim()}]);ss('roster',RO);index();render();toast('所属を追加しました')},
- xpOpen:function(){if(!EV||!EV.sections||!EV.sections.length)return;var secs=xpOrder(),sel={};secs.forEach(function(x){if((x.players||[]).some(isMine))sel[x.id]=1});if(!Object.keys(sel).length&&TB.s!=null)sel[TB.s]=1;xpClear();XP={secs:secs,sel:sel,fmt:XFMT,busy:false,out:null,err:''};xpRender()},
+ xpOpen:function(){if(!EV||!EV.sections||!EV.sections.length)return;var secs=xpOrder(),sel={};secs.forEach(function(x){if((x.players||[]).some(isMine))sel[x.id]=1});if(!Object.keys(sel).length&&TB.s!=null)sel[TB.s]=1;xpClear();XP={secs:secs,sel:sel,fmt:XFMT,inc:{tbl:XINC.tbl,list:XINC.list},busy:false,out:null,err:''};xpRender()},
  xpClose:function(){xpClear();XP=null;xpRender()},
  xpTog:function(i){if(!XP||XP.busy)return;var x=XP.secs[i];if(!x)return;if(XP.sel[x.id])delete XP.sel[x.id];else XP.sel[x.id]=1;xpRender()},
  xpPick:function(k){if(!XP||XP.busy)return;XP.sel={};XP.secs.forEach(function(x){if(k==='all'||(k==='mine'&&(x.players||[]).some(isMine)))XP.sel[x.id]=1});xpRender()},
  xpFmt:function(f){if(!XP||XP.busy)return;XP.fmt=XFMT=f;xpRender()},
+ xpInc:function(k){if(!XP||XP.busy)return;var o=XP.inc,n=!o[k];if(!n&&!o[k==='tbl'?'list':'tbl']){toast('どちらか1つは選んでください');return}o[k]=n;XINC={tbl:o.tbl,list:o.list};xpRender()},
  xpBack:function(){if(!XP)return;xpClear();XP.err='';xpRender()},
  xpGo:function(){
   if(!XP||XP.busy)return;var secs=XP.secs.filter(function(x){return XP.sel[x.id]});if(!secs.length)return;
@@ -1649,7 +1651,7 @@ window.T={
    if(i>=secs.length){
     if(fmt==='pdf'){try{var b=xPdf(pdfp);files=[{name:'tsugidare-hyo-'+xStamp()+'.pdf',type:'application/pdf',blob:b,url:URL.createObjectURL(b),label:pdfp.length+'ページのPDF'}]}catch(e){return fail()}}
     XP.out={files:files};XP.busy=false;xpRender();return}
-   var pg,sec=secs[i];try{pg=xPage(sec)}catch(e){return fail('「'+sec.name+'」を作れませんでした。')}
+   var pg,sec=secs[i];try{pg=xPage(sec,XP.inc)}catch(e){return fail('「'+sec.name+'」を作れませんでした。')}
    xRaster(pg,function(c){
     if(XP!==self)return;if(!c)return fail('「'+sec.name+'」を画像にできませんでした。');
     function step(){i++;XP.prog=i;xpRender();setTimeout(next,0)}
