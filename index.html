@@ -447,7 +447,7 @@ header #hdate .d{font-size:11px;color:var(--sub)}
     <div class="sm" style="margin-top:8px">大会データ・名簿・結果を、この端末から消します。蓄積した戦績は残ります。</div>
   </div>
   <div class="sm" style="margin:0 0 12px">このページ（HTML）には選手名が入っていません。大会データと名簿は、この端末の中だけに保存されます。</div>
-  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.11.3</div>
+  <div class="sm" style="text-align:center;margin:0 0 8px">次だれ？　バージョン 0.11.4</div>
 </div>
 </div>
 
@@ -1274,10 +1274,16 @@ if(pa==null||pb==null){
 /* ---------- 団体戦 ---------- */
 function tcOf(sec){var c=(ST.tc&&ST.tc[sec.id])||{},n=parseInt(c.n,10);if(!(n>=1&&n<=30))n=5;return {n:n,y:c.y===0?0:1}}
 function tmMin(sec){return Math.floor(tcOf(sec).n/2)+1}
-function tmMem(sec,tid){var p=sec.pp&&sec.pp[tid],a=(p&&Array.isArray(p.members))?p.members:[];return a.map(function(x){return String(x&&typeof x==='object'?(x.name||''):(x==null?'':x)).trim()}).filter(Boolean)}
-function tmCnt(sec,tid){var n=tcOf(sec).n,v=parseInt(ST.tn&&ST.tn[sec.id+'|'+tid],10);if(v>=0&&v<=n)return v;var L=tmMem(sec,tid).length;return L?Math.min(n,L):n}
-function tmEmpty(sec,no,side,cnt){var n=tcOf(sec).n,k=n-cnt,e={},i,o=ST.tb[sec.id+'|'+no],a=o&&o.e&&o.e[side];
+var TMB=/^(|[-－―ーｰ×✕]|欠|欠員|欠場|空|空き|不在|なし|無)$/;
+function tmRaw(sec,tid){var p=sec.pp&&sec.pp[tid],a=(p&&Array.isArray(p.members))?p.members:null;if(!a)return null;return a.map(function(x){var t=String(x&&typeof x==='object'?(x.name||''):(x==null?'':x)).trim();return TMB.test(t)?'':t})}
+function tmMem(sec,tid){var a=tmRaw(sec,tid);return a?a.filter(Boolean):[]}
+/* members に空き（""・null・"欠"など）があるとき＝欠員の位置が決まっているデータ（詰めない） */
+function tmFixV(sec,tid){var a=tmRaw(sec,tid);if(!a||!a.some(function(t){return !t}))return null;var n=tcOf(sec).n,v={},k=0;for(var i=0;i<n;i++){if(!a[i]){v[i]=1;k++}}return {raw:a,vac:v,k:k}}
+function tmSame(e,v){var a=Object.keys(e),b=Object.keys(v);if(a.length!==b.length)return false;return a.every(function(x){return v[x]})}
+function tmCnt(sec,tid){var n=tcOf(sec).n,v=parseInt(ST.tn&&ST.tn[sec.id+'|'+tid],10);if(v>=0&&v<=n)return v;var fx=tmFixV(sec,tid);if(fx)return n-fx.k;var L=tmMem(sec,tid).length;return L?Math.min(n,L):n}
+function tmEmpty(sec,no,side,cnt,tid){var n=tcOf(sec).n,k=n-cnt,e={},i,o=ST.tb[sec.id+'|'+no],a=o&&o.e&&o.e[side];
  if(Array.isArray(a)&&a.length===k){var ok=true,u={};a.forEach(function(x){if(!(x>=0&&x<n)||u[x])ok=false;u[x]=1});if(ok){a.forEach(function(x){e[x]=1});return e}}
+ var fx=(tid!=null)?tmFixV(sec,tid):null;if(fx&&cnt===n-fx.k){Object.keys(fx.vac).forEach(function(x){e[x]=1});return e}
  for(i=0;i<k;i++)e[i]=1;return e}
 function posName(n,i){if(n===7)return ['先鋒','次鋒','五将','中堅','三将','副将','大将'][i];if(n===1)return '大将';if(i===0)return '先鋒';if(i===n-1)return '大将';if(n===3)return '中堅';if(n>=4&&i===1)return '次鋒';if(n>=4&&i===n-2)return '副将';if(n>=5&&n%2===1&&i===(n-1)/2)return '中堅';return (i+1)+'番'}
 function tmGet(sec,no,mk){var k=sec.id+'|'+no,o=ST.tb[k];if(!o&&mk)o=ST.tb[k]={b:[],r:null,e:{}};return o||{b:[],r:null,e:{}}}
@@ -1288,8 +1294,8 @@ function tmSym(k){var h='<svg class="tms" width="22" height="22" viewBox="0 0 24
 function tmCalc(sec,no){
  var m=sec.mm[no],ta=slot(sec,m.a),tb=slot(sec,m.b),c=tcOf(sec),n=c.n,o=tmGet(sec,no),ca=ta!=null?tmCnt(sec,ta):n,cb=tb!=null?tmCnt(sec,tb):n,rows=[],aw=0,bw=0,done=true,any=false,cn={a:{},b:{}},ord=['1','w'].concat(c.y?['y']:[],['k']),i;
  ord.forEach(function(k){cn.a[k]=0;cn.b[k]=0});
- var ea=tmEmpty(sec,no,'a',ca),eb=tmEmpty(sec,no,'b',cb),ma=ta!=null?tmMem(sec,ta):[],mb=tb!=null?tmMem(sec,tb):[],ka=0,kb=0;
- for(i=0;i<n;i++){var b=o.b[i]||{},ah=!ea[i],bh=!eb[i],da=ah?(ma[ka++]||''):'',db=bh?(mb[kb++]||''):'',r={i:i,pos:posName(n,i),an:b.an||da,bn:b.bn||db,ea:!!ea[i],eb:!!eb[i],w:b.w||null,k:b.k||'',t:b.t||'',s:b.s||0,auto:null,empty:false};
+ var ea=tmEmpty(sec,no,'a',ca,ta),eb=tmEmpty(sec,no,'b',cb,tb),ma=ta!=null?tmMem(sec,ta):[],mb=tb!=null?tmMem(sec,tb):[],ka=0,kb=0,fa=ta!=null?tmFixV(sec,ta):null,fb=tb!=null?tmFixV(sec,tb):null,xa=!!(fa&&tmSame(ea,fa.vac)),xb=!!(fb&&tmSame(eb,fb.vac));
+ for(i=0;i<n;i++){var b=o.b[i]||{},ah=!ea[i],bh=!eb[i],da=ah?(xa?(fa.raw[i]||''):(ma[ka++]||'')):'',db=bh?(xb?(fb.raw[i]||''):(mb[kb++]||'')):'',r={i:i,pos:posName(n,i),an:b.an||da,bn:b.bn||db,ea:!!ea[i],eb:!!eb[i],w:b.w||null,k:b.k||'',t:b.t||'',s:b.s||0,auto:null,empty:false};
   if(!ah&&!bh)r.empty=true;else if(!ah||!bh){r.auto=ah?'a':'b';r.w=r.auto;r.k='1';r.t='不戦勝'}
   if(!r.empty){if(r.w)any=true;else done=false}
   if(r.w==='a'||r.w==='b'){if(r.w==='a')aw++;else bw++;var kk=r.k||'';if(kk&&cn[r.w][kk]!=null)cn[r.w][kk]++}
@@ -1351,7 +1357,7 @@ function tmRender(sec,no,h){
  }
  h+='<div class="shh">出場人数</div>';
  [['a',c.ta,tna],['b',c.tb,tnb]].forEach(function(z){var v=tmCnt(sec,z[1]);h+='<div class="tmcnt"><span>'+esc(z[2])+'　出場</span><span class="st"><button onclick="T.tmCnt(\''+z[0]+'\',-1)" aria-label="減らす">－</button><span>'+v+'人</span><button onclick="T.tmCnt(\''+z[0]+'\',1)" aria-label="増やす"'+(v>=n?' disabled':'')+'>＋</button></span></div>';
-  if(v<n){var ee=tmEmpty(sec,no,z[0],v),sel=(o.e&&Array.isArray(o.e[z[0]]))?o.e[z[0]]:null,bad=!!(sel&&sel.length!==n-v);h+='<div class="sm" style="margin:0 0 4px">欠員の位置（'+(n-v)+'か所）。はじめは先鋒側から欠員にします。'+(bad?'あと'+Math.abs(n-v-sel.length)+'か所'+(sel.length<n-v?'選んで':'外して')+'ください。':'')+'</div><div>';for(var q=0;q<n;q++)h+=chp(posName(n,q),!!(bad?(sel||[]).indexOf(q)>=0:ee[q]),"T.tmEmp('"+z[0]+"',"+q+")");h+='</div>'}
+  if(v<n){var ee=tmEmpty(sec,no,z[0],v,z[1]),sel=(o.e&&Array.isArray(o.e[z[0]]))?o.e[z[0]]:null,bad=!!(sel&&sel.length!==n-v);h+='<div class="sm" style="margin:0 0 4px">欠員の位置（'+(n-v)+'か所）。'+((function(){var fx=tmFixV(sec,z[1]);return fx&&v===n-fx.k})()?'はじめは大会データの欠員の位置にしています。':'はじめは先鋒側から欠員にします。')+(bad?'あと'+Math.abs(n-v-sel.length)+'か所'+(sel.length<n-v?'選んで':'外して')+'ください。':'')+'</div><div>';for(var q=0;q<n;q++)h+=chp(posName(n,q),!!(bad?(sel||[]).indexOf(q)>=0:ee[q]),"T.tmEmp('"+z[0]+"',"+q+")");h+='</div>'}
  });
  h+='<div class="sm">最低人数は'+mn+'人です（'+n+'人制）。これより少なくなると棄権になります。人数が足りない分は、相手の不戦勝（一本）です。</div>';
  h+='<div class="row2" style="margin-top:14px">'+(r?'<button onclick="T.shDel()">結果を全部消す</button>':'')+'<button class="pri" onclick="T.shClose()">閉じる</button></div>';
@@ -1559,7 +1565,7 @@ window.T={
  tmS:function(v){if(!SH||SH.tr==null)return;var sec=SH.sec,o=tmGet(sec,SH.no,true),b=SH.tr==='r'?(o.r=o.r||{}):(o.b[SH.tr]=o.b[SH.tr]||{});snap();b.s=v;save();render();shRender()},
  tmF:function(v){if(!SH||SH.tr!=='r')return;var sec=SH.sec,o=tmGet(sec,SH.no,true);o.r=o.r||{};snap();o.r.f=(o.r.f===v)?'':v;save();render();shRender()},
  tmTech:function(t){if(!SH||SH.tr==null)return;var sec=SH.sec,o=tmGet(sec,SH.no,true),b=SH.tr==='r'?(o.r=o.r||{}):(o.b[SH.tr]=o.b[SH.tr]||{});snap();b.t=(b.t===t)?'':t;save();render();shRender()},
- tmEmp:function(side,i){if(!SH||!SH.sec.team)return;var sec=SH.sec,no=SH.no,m=sec.mm[no],t=slot(sec,side==='a'?m.a:m.b);if(t==null)return;var n=tcOf(sec).n,v=tmCnt(sec,t);if(v>=n)return;snap();var o=tmGet(sec,no,true);o.e=o.e||{};var cur=Array.isArray(o.e[side])?o.e[side].slice():Object.keys(tmEmpty(sec,no,side,v)).map(Number),k=cur.indexOf(i);if(k>=0)cur.splice(k,1);else cur.push(i);o.e[side]=cur;tmSync(sec,no);save();render();shRender()},
+ tmEmp:function(side,i){if(!SH||!SH.sec.team)return;var sec=SH.sec,no=SH.no,m=sec.mm[no],t=slot(sec,side==='a'?m.a:m.b);if(t==null)return;var n=tcOf(sec).n,v=tmCnt(sec,t);if(v>=n)return;snap();var o=tmGet(sec,no,true);o.e=o.e||{};var cur=Array.isArray(o.e[side])?o.e[side].slice():Object.keys(tmEmpty(sec,no,side,v,t)).map(Number),k=cur.indexOf(i);if(k>=0)cur.splice(k,1);else cur.push(i);o.e[side]=cur;tmSync(sec,no);save();render();shRender()},
  tmClr:function(){if(!SH||SH.tr==null)return;var sec=SH.sec,o=tmGet(sec,SH.no,true);snap();if(SH.tr==='r')o.r=null;else o.b[SH.tr]=null;tmSync(sec,SH.no);save();render();shRender()},
  tmCnt:function(side,d){if(!SH||!SH.sec.team)return;var sec=SH.sec,no=SH.no,m=sec.mm[no],t=slot(sec,side==='a'?m.a:m.b);if(t==null)return;var n=tcOf(sec).n,cur=tmCnt(sec,t),v=Math.max(0,Math.min(n,cur+d)),mn=tmMin(sec),k=sec.id+'|'+no;if(v===cur)return;
   if(v<mn&&cur>=mn&&!confirm(pname(sec,t)+'は最低人数（'+mn+'人）に満たなくなるので、棄権になります。よろしいですか？\n（「戻す」で元に戻せます）'))return;
